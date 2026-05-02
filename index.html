@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nuel Academic Tutors — FluentAT</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<!-- LANDING -->
+<div id="landing" class="screen active">
+  <nav class="landing-nav">
+    <div class="brand">
+      <div class="brand-mark">N</div>
+      <div><div class="brand-name">Nuel Academic Tutors</div><div class="brand-sub">FluentAT Platform</div></div>
+    </div>
+    <div style="display:flex;gap:10px;"><button class="nav-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.5);color:var(--gold);" onclick="showScreen('firebase-setup')">🔥 Setup Firebase</button><button class="nav-btn" onclick="showScreen('role-select')">Sign In →</button></div>
+  </nav>
+  <img id="hero-banner-img" class="hero-banner-img" src="" alt="School Banner">
+<div class="landing-hero">
+    <div class="hero-badge">&starf; Nigeria&rsquo;s Academic Excellence Hub</div>
+    <h1 class="hero-title">Learn. Grow.<br><em>Excel.</em></h1>
+    <p class="hero-sub">A complete academic platform for students and teachers &mdash; live classes, notes, exams, and results all in one place.</p>
+    <div class="hero-btns">
+      <button class="btn-gold" onclick="showScreen('role-select')">Get Started</button>
+      <button class="btn-outline" onclick="showScreen('role-select')">Sign In</button>
+    </div>
+    <div style="margin-top:40px;width:100%;max-width:680px;animation:fadeUp 0.6s 0.5s ease both;">
+      <svg viewBox="0 0 680 260" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;border-radius:16px;overflow:hidden;">
+        <defs>
+          <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#111f3a;stop-opacity:1"/>
+            <stop offset="100%" style="stop-color:#1a2f52;stop-opacity:1"/>
+          </linearGradient>
+          <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#c9a84c;stop-opacity:1"/>
+            <stop offset="100%" style="stop-color:#e8c96a;stop-opacity:1"/>
+          </linearGradient>
+        </defs>
+        <!-- Background -->
+        <rect width="680" height="260" fill="url(#bgGrad)"/>
+        <!-- Decorative circles -->
+        <circle cx="580" cy="40" r="80" fill="rgba(201,168,76,0.06)"/>
+        <circle cx="100" cy="220" r="60" fill="rgba(201,168,76,0.04)"/>
+        <!-- Book icon group (left) -->
+        <rect x="40" y="70" width="50" height="64" rx="4" fill="#c9a84c" opacity="0.9"/>
+        <rect x="46" y="76" width="38" height="52" rx="2" fill="#111f3a"/>
+        <rect x="50" y="84" width="26" height="3" rx="1.5" fill="#c9a84c" opacity="0.7"/>
+        <rect x="50" y="91" width="20" height="3" rx="1.5" fill="#c9a84c" opacity="0.5"/>
+        <rect x="50" y="98" width="24" height="3" rx="1.5" fill="#c9a84c" opacity="0.5"/>
+        <rect x="50" y="105" width="18" height="3" rx="1.5" fill="#c9a84c" opacity="0.5"/>
+        <!-- Second book -->
+        <rect x="55" y="80" width="50" height="60" rx="4" fill="#e8c96a" opacity="0.7"/>
+        <rect x="61" y="86" width="38" height="48" rx="2" fill="#0a1628"/>
+        <rect x="65" y="94" width="26" height="3" rx="1.5" fill="#e8c96a" opacity="0.6"/>
+        <rect x="65" y="101" width="20" height="3" rx="1.5" fill="#e8c96a" opacity="0.4"/>
+        <!-- Pencil -->
+        <rect x="72" y="58" width="8" height="40" rx="2" fill="#c9a84c" transform="rotate(-20 76 78)"/>
+        <polygon points="68,98 76,100 72,108" fill="#fdf8f0" transform="rotate(-20 72 103)"/>
+        <!-- Center: Graduation cap -->
+        <ellipse cx="340" cy="155" rx="55" ry="12" fill="#c9a84c" opacity="0.15"/>
+        <rect x="295" y="95" width="90" height="56" rx="8" fill="#c9a84c" opacity="0.12" stroke="#c9a84c" stroke-width="1.5"/>
+        <!-- Cap top -->
+        <polygon points="340,68 290,92 340,106 390,92" fill="#c9a84c"/>
+        <rect x="330" y="92" width="20" height="6" rx="2" fill="#e8c96a"/>
+        <!-- Cap board -->
+        <rect x="305" y="88" width="70" height="8" rx="2" fill="url(#goldGrad)"/>
+        <!-- Tassel -->
+        <line x1="390" y1="92" x2="405" y2="112" stroke="#c9a84c" stroke-width="2.5"/>
+        <circle cx="405" cy="114" r="4" fill="#c9a84c"/>
+        <line x1="405" y1="118" x2="402" y2="130" stroke="#c9a84c" stroke-width="1.5"/>
+        <line x1="405" y1="118" x2="407" y2="131" stroke="#c9a84c" stroke-width="1.5"/>
+        <line x1="405" y1="118" x2="410" y2="128" stroke="#c9a84c" stroke-width="1.5"/>
+        <!-- Person/student silhouette center -->
+        <circle cx="340" cy="145" r="18" fill="#c9a84c" opacity="0.2"/>
+        <circle cx="340" cy="138" r="10" fill="#c9a84c" opacity="0.5"/>
+        <path d="M318 168 Q340 155 362 168" stroke="#c9a84c" stroke-width="3" fill="none" opacity="0.5"/>
+        <!-- Stars -->
+        <text x="170" y="110" font-size="18" fill="#c9a84c" opacity="0.6">&#9733;</text>
+        <text x="490" y="130" font-size="14" fill="#c9a84c" opacity="0.4">&#9733;</text>
+        <text x="220" y="175" font-size="10" fill="#c9a84c" opacity="0.3">&#9733;</text>
+        <text x="460" y="80" font-size="12" fill="#c9a84c" opacity="0.4">&#9733;</text>
+        <!-- Right: Chart/results icon -->
+        <rect x="570" y="80" width="70" height="80" rx="6" fill="rgba(201,168,76,0.08)" stroke="rgba(201,168,76,0.2)" stroke-width="1"/>
+        <rect x="580" y="130" width="10" height="20" rx="2" fill="#c9a84c" opacity="0.7"/>
+        <rect x="595" y="118" width="10" height="32" rx="2" fill="#c9a84c" opacity="0.9"/>
+        <rect x="610" y="108" width="10" height="42" rx="2" fill="#e8c96a"/>
+        <line x1="578" y1="150" x2="622" y2="150" stroke="rgba(201,168,76,0.3)" stroke-width="1"/>
+        <!-- Bottom text -->
+        <text x="340" y="218" text-anchor="middle" font-family="Georgia,serif" font-size="15" font-weight="700" fill="#c9a84c" letter-spacing="2">NUEL ACADEMIC TUTORS</text>
+        <text x="340" y="236" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="rgba(255,255,255,0.4)" letter-spacing="1.5">KNOWLEDGE &bull; EXCELLENCE &bull; RESULTS</text>
+        <!-- Subtle grid lines -->
+        <line x1="0" y1="260" x2="680" y2="260" stroke="rgba(201,168,76,0.15)" stroke-width="1"/>
+        <line x1="0" y1="0" x2="0" y2="260" stroke="rgba(201,168,76,0.1)" stroke-width="1"/>
+        <line x1="680" y1="0" x2="680" y2="260" stroke="rgba(201,168,76,0.1)" stroke-width="1"/>
+      </svg>
+    </div>
+    <div class="landing-features">
+      <div class="feat-card"><div class="feat-icon">&#128218;</div><div class="feat-title">Notes &amp; Resources</div><div class="feat-desc">Teachers upload study notes; students download instantly from their dashboard.</div></div>
+      <div class="feat-card"><div class="feat-icon">&#9997;&#65039;</div><div class="feat-title">Online Exams</div><div class="feat-desc">Timed multiple-choice exams with anti-cheat monitoring and instant results.</div></div>
+      <div class="feat-card"><div class="feat-icon">&#128202;</div><div class="feat-title">Instant Results</div><div class="feat-desc">Automatic grading with detailed score breakdowns and answer reviews.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ROLE SELECT -->
+<div id="role-select" class="screen">
+  <button class="rs-back" onclick="showScreen('landing')">&larr; Back</button>
+  <div><div class="rs-logo">Nuel <span>Academic</span> Tutors</div><div class="rs-sub">Select your role to continue</div></div>
+  <div class="role-cards">
+    <button class="role-card" onclick="goLogin('admin')"><div class="role-card-icon">&#128737;&#65039;</div><div class="role-card-label">Admin</div><div class="role-card-desc">System management</div></button>
+    <button class="role-card" onclick="goLogin('teacher')"><div class="role-card-icon">&#128104;&#8205;&#127979;</div><div class="role-card-label">Teacher</div><div class="role-card-desc">Create &amp; manage content</div></button>
+    <button class="role-card" onclick="goLogin('student')"><div class="role-card-icon">&#127891;</div><div class="role-card-label">Student</div><div class="role-card-desc">Learn &amp; take exams</div></button>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div id="login-screen" class="screen">
+  <div class="login-card">
+    <button class="login-back-btn" onclick="showScreen('role-select')">&larr; Choose a different role</button>
+    <div class="login-role-tag" id="li-role-tag">Admin</div>
+    <div class="login-title">Welcome Back</div>
+    <div class="login-sub" id="li-sub">Sign in to your account</div>
+    <div class="field"><label>Email / Username</label><input type="text" id="li-email" placeholder="Enter email or username" autocomplete="off" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="field"><label>Password</label>
+<div class="pw-wrap">
+  <input type="password" id="li-pass" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()">
+  <button class="pw-toggle" type="button" onclick="togglePwVis('li-pass',this)" title="Show/hide password">&#128218;</button>
+</div></div>
+    <div class="login-error" id="li-err"></div>
+    <button class="btn-login" onclick="doLogin()">Sign In &rarr;</button>
+  </div>
+</div>
+
+<!-- STUDENT ACCESS CODE GATE -->
+
+<!-- FIREBASE CONFIG -->
+<div id="firebase-setup" class="screen">
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:var(--navy);padding:30px 20px;">
+    <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(201,168,76,0.25);border-radius:var(--radius);padding:32px 28px;max-width:500px;width:100%;">
+      <div style="text-align:center;margin-bottom:24px;">
+        <div style="font-size:48px;margin-bottom:12px;">🔥</div>
+        <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:#fff;margin-bottom:6px;">Connect Firebase</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.6;">Paste your Firebase project config to enable cloud sync across all devices.</div>
+      </div>
+      <div class="field" style="margin-bottom:10px;"><label style="color:rgba(255,255,255,0.6);">Firebase Config JSON</label>
+        <textarea id="fb-config-input" rows="8" placeholder='{
+  "apiKey": "...",
+  "authDomain": "...",
+  "projectId": "...",
+  "storageBucket": "...",
+  "messagingSenderId": "...",
+  "appId": "..."
+}' style="background:rgba(255,255,255,0.07);border:1.5px solid rgba(201,168,76,0.25);border-radius:var(--radius-sm);color:#fff;font-family:'JetBrains Mono',monospace;font-size:12px;padding:12px;width:100%;resize:vertical;outline:none;line-height:1.5;">{
+  apiKey: "AIzaSyAWlF83z03HI7hAC5xnuCe1qjljz6l_QbY",
+  authDomain: "nuel-academic-tutors.firebaseapp.com",
+  projectId: "nuel-academic-tutors",
+  storageBucket: "nuel-academic-tutors.firebasestorage.app",
+  messagingSenderId: "735329597088",
+  appId: "1:735329597088:web:31e8066f0ab45571607bc5"
+}</textarea>
+      </div>
+      <div id="fb-setup-err" style="font-size:12px;color:var(--danger);min-height:16px;margin-bottom:10px;font-family:'JetBrains Mono',monospace;"></div>
+      <button class="btn-gold" style="width:100%;padding:14px;" onclick="connectFirebase()">Connect &amp; Continue</button>
+      <button onclick="showScreen('landing')" style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:13px;cursor:pointer;margin-top:14px;width:100%;text-align:center;font-family:'Plus Jakarta Sans',sans-serif;">&larr; Back</button>
+      <div style="margin-top:16px;padding:12px;background:rgba(201,168,76,0.08);border-radius:var(--radius-sm);border-left:3px solid var(--gold);">
+        <div style="font-size:11px;color:rgba(255,255,255,0.5);line-height:1.8;">
+          &#8250; Create a project at <strong style="color:var(--gold)">console.firebase.google.com</strong><br>
+          &#8250; Enable Firestore Database (test mode to start)<br>
+          &#8250; Go to Project Settings &rarr; Your apps &rarr; Config<br>
+          &#8250; Copy the firebaseConfig object and paste above
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="access-gate" class="screen">
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:var(--cream);padding:40px 20px;">
+    <div class="login-card" style="max-width:440px;">
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="width:64px;height:64px;background:rgba(201,168,76,0.1);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px;">&#128274;</div>
+        <div class="login-title">Access Required</div>
+        <div class="login-sub">Enter the student access code to continue. Contact your instructor if you don't have it.</div>
+      </div>
+      <div style="background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--text2);text-align:center;">
+        Logged in as <strong id="gate-user-name" style="color:var(--navy)"></strong>
+      </div>
+      <div class="field">
+        <label>Access Code</label>
+        <div class="pw-wrap">
+  <input type="password" id="gate-code-input" placeholder="Enter access code..." autocomplete="off" style="letter-spacing:0.08em;text-align:center;font-size:16px;" onkeydown="if(event.key==='Enter')checkAccessCode()">
+  <button class="pw-toggle" type="button" onclick="togglePwVis('gate-code-input',this)" title="Show/hide code">&#128218;</button>
+</div>
+      </div>
+      <div class="login-error" id="gate-code-error"></div>
+      <button class="btn-login" onclick="checkAccessCode()">&#128275; Unlock &amp; Enter</button>
+      <button class="login-back-btn" onclick="logout()">&#8592; Sign Out</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN DASHBOARD -->
+<div id="admin-dash" class="screen">
+  <div class="dash-header">
+    <div class="dash-brand">Nuel <span>AT</span></div>
+    <div class="dash-tabs-nav">
+      <button class="dtb active" onclick="adminTab('add-user')" id="atb-add-user">Add User</button>
+      <button class="dtb" onclick="adminTab('user-list')" id="atb-user-list">User List</button>
+      <button class="dtb" onclick="adminTab('reset-exams')" id="atb-reset-exams">Reset Exams</button>
+      <button class="dtb" onclick="adminTab('session-log')" id="atb-session-log">Session Log</button>
+      <button class="dtb" onclick="adminTab('access-code')" id="atb-access-code">&#128274; Access Code</button>
+    </div>
+    <div class="dash-user-area">
+      <span class="dash-uname" id="admin-uname"></span>
+      <button class="dash-signout" onclick="logout()">Sign Out</button>
+    </div>
+  </div>
+  <div class="dash-body">
+    <div class="welcome-banner"><div><div class="wb-title">Welcome, <span id="admin-greeting" style="color:var(--gold)">Administrator</span> &#128737;&#65039;</div><div class="wb-sub">Nuel Academic Tutors &mdash; Admin Control Panel</div></div><div style="font-size:44px">&#128737;&#65039;</div></div>
+    <div class="tab-panel active" id="admin-panel-add-user">
+      <div class="section-title">Add New User</div>
+      <div class="add-user-grid">
+        <div class="auc"><div class="auc-head"><div class="auc-icon teacher">&#128104;&#8205;&#127979;</div><div class="auc-title">Add Teacher</div></div>
+          <div class="field"><label>Full Name</label><input type="text" id="at-name" placeholder="e.g. Mr. Adeyemi Okafor"></div>
+          <div class="field"><label>Email / Username</label><input type="text" id="at-email" placeholder="e.g. adeyemi@school.ng" autocomplete="off"></div>
+          <div class="field"><label>Password</label>
+<div class="pw-wrap">
+  <input type="password" id="at-pass" placeholder="Set a password" autocomplete="off">
+  <button class="pw-toggle" type="button" onclick="togglePwVis('at-pass',this)" title="Show/hide password">&#128218;</button>
+</div></div>
+          <button class="btn-add" onclick="addUser('teacher')">&#65291; Add Teacher</button>
+        </div>
+        <div class="auc"><div class="auc-head"><div class="auc-icon student">&#127891;</div><div class="auc-title">Add Student</div></div>
+          <div class="field"><label>Full Name</label><input type="text" id="as-name" placeholder="e.g. Chinwe Obi"></div>
+          <div class="field"><label>Email / Username</label><input type="text" id="as-email" placeholder="e.g. chinwe@school.ng" autocomplete="off"></div>
+          <div class="field"><label>Password</label>
+<div class="pw-wrap">
+  <input type="password" id="as-pass" placeholder="Set a password" autocomplete="off">
+  <button class="pw-toggle" type="button" onclick="togglePwVis('as-pass',this)" title="Show/hide password">&#128218;</button>
+</div></div>
+          <button class="btn-add gold" onclick="addUser('student')">&#65291; Add Student</button>
+        </div>
+      </div>
+    </div>
+    <div class="tab-panel" id="admin-panel-user-list"><div class="section-title">All Users</div><div id="admin-user-list-body"></div></div>
+    <div class="tab-panel" id="admin-panel-reset-exams"><div class="section-title">Reset Exams Per Student</div><div id="admin-reset-body"></div></div>
+    <div class="tab-panel" id="admin-panel-session-log"><div class="section-title">Student Session Logs</div><div id="admin-session-body"></div></div>
+    <div class="tab-panel" id="admin-panel-access-code">
+      <div class="section-title">Student Access Code</div>
+      <div class="card" style="max-width:560px;margin-bottom:20px;">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">
+          <div style="width:48px;height:48px;background:rgba(201,168,76,0.1);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">&#128274;</div>
+          <div>
+            <div style="font-weight:700;font-size:16px;color:var(--navy);">Student Login Gate</div>
+            <div style="font-size:12px;color:var(--text3);">When active, students must enter this code after login to access the platform.</div>
+          </div>
+        </div>
+        <div id="access-code-status" style="margin-bottom:18px;"></div>
+        <div class="field" style="margin-bottom:12px;">
+          <label>New Access Code</label>
+          <input type="text" id="new-access-code" placeholder="e.g. NAT2025UNLOCK" autocomplete="off" style="letter-spacing:0.05em;">
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn-add" style="flex:1;min-width:140px;" onclick="setAccessCode()">&#128274; Set / Update Code</button>
+          <button class="btn-add" style="flex:1;min-width:140px;background:var(--danger);" onclick="clearAccessCode()">&#128275; Remove Code</button>
+        </div>
+        <div style="margin-top:14px;font-size:11px;color:var(--text3);line-height:1.8;border-top:1px solid var(--border2);padding-top:12px;">
+          &#8250; Removing the code disables the gate — students can log in freely<br>
+          &#8250; Setting a new code immediately replaces the old one<br>
+          &#8250; Share the code only with enrolled students
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TEACHER DASHBOARD -->
+<div id="teacher-dash" class="screen">
+  <div class="dash-header">
+    <div class="dash-brand">Nuel <span>AT</span></div>
+    <div class="dash-tabs-nav">
+      <button class="dtb active" onclick="teacherTab('home')" id="ttb-home">Dashboard</button>
+      <button class="dtb" onclick="teacherTab('notes')" id="ttb-notes">Notes</button>
+      <button class="dtb" onclick="teacherTab('exams')" id="ttb-exams">Exams</button>
+      <button class="dtb" onclick="teacherTab('scores')" id="ttb-scores">Scores</button>
+    </div>
+    <div class="dash-user-area">
+      <span class="dash-uname" id="teacher-uname"></span>
+      <button class="dash-signout" onclick="logout()">Sign Out</button>
+    </div>
+  </div>
+  <div class="dash-body">
+    <div class="tab-panel active" id="teacher-panel-home">
+      <div class="welcome-banner"><div><div class="wb-title">Welcome, <span id="teacher-greeting" style="color:var(--gold)">Teacher</span> &#128104;&#8205;&#127979;</div><div class="wb-sub">Manage your classes, upload notes, and create exams.</div></div><div style="font-size:44px">&#128218;</div></div>
+      <div class="tac-grid">
+        <div class="tac" onclick="teacherTab('notes')"><div class="tac-icon">&#128196;</div><div class="tac-title">Upload Notes</div><div class="tac-desc">Share resources</div></div>
+        <div class="tac" onclick="teacherTab('exams')"><div class="tac-icon">&#9997;&#65039;</div><div class="tac-title">Create Exam</div><div class="tac-desc">Build &amp; publish exams</div></div>
+        <div class="tac" onclick="teacherTab('scores')"><div class="tac-icon">&#128202;</div><div class="tac-title">View Scores</div><div class="tac-desc">Student results</div></div>
+      </div>
+    </div>
+    <div class="tab-panel" id="teacher-panel-notes">
+      <div class="section-title">Notes &amp; Resources</div>
+      <label class="upload-zone" for="note-file-input" style="cursor:pointer;display:block;">
+        <div style="font-size:38px;margin-bottom:10px;opacity:0.55">&#128193;</div>
+        <div style="font-size:14px;font-weight:600;color:var(--text2);">Tap here to upload notes</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px;font-family:'JetBrains Mono',monospace;">PDF, Word, PowerPoint, Images</div>
+      </label>
+      <input type="file" id="note-file-input" multiple accept=".pdf,.doc,.docx,.pptx,.txt,.png,.jpg,.jpeg" onchange="handleNoteUpload(event)" style="display:none;">
+      <div style="margin-top:18px" id="notes-list-body"></div>
+    </div>
+    <div class="tab-panel" id="teacher-panel-exams">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+        <div class="section-title" style="margin:0">Exams</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <label for="import-exam-input" class="btn-sm" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;">&#128229; Import JSON</label>
+          <input type="file" id="import-exam-input" accept=".json" style="display:none;" onchange="importExamJSON(event)">
+          <button class="btn-sm primary" onclick="showCreateExam()">&#65291; Create New Exam</button>
+        </div>
+      </div>
+      <div id="teacher-exam-list"></div>
+    </div>
+
+    <div class="tab-panel" id="teacher-panel-scores"><div class="section-title">Student Scores</div><div id="teacher-scores-body"></div></div>
+
+  </div>
+</div>
+
+<!-- CREATE EXAM -->
+<div id="create-exam-screen" class="screen">
+  <div class="ces-header">
+    <button class="ces-back" onclick="backFromCreateExam()">&larr; Back</button>
+    <div class="ces-title" id="ces-title">Create Exam</div>
+    <div style="display:flex;gap:6px;flex-shrink:0;">
+      <button class="btn-sm" onclick="doSaveExam(false)" style="background:rgba(245,158,11,0.15);color:#b45309;border:1px solid rgba(245,158,11,0.3);font-size:11px;">&#128190; Save Draft</button>
+      <button class="btn-sm primary" onclick="doSaveExam(true)" style="background:var(--gold);color:var(--navy);border:none;font-size:11px;">&#10003; Publish</button>
+    </div>
+  </div>
+  <div class="exam-body">
+    <div class="card" style="margin-bottom:18px;">
+      <div style="font-weight:700;font-size:15px;color:var(--navy);margin-bottom:14px;">Exam Settings</div>
+      <div class="add-user-grid">
+        <div class="field"><label>Exam Name</label><input type="text" id="ex-name" placeholder="e.g. Biology Term 2 Test"></div>
+        <div class="field"><label>Timer (minutes, 0=off)</label><input type="number" id="ex-timer" value="0" min="0"></div>
+      </div>
+      <div class="add-user-grid" style="margin-top:10px;">
+        <div class="field"><label>Max Score</label><input type="number" id="ex-max" value="100" min="1"></div>
+        <div class="field"><label>Pass Score</label><input type="number" id="ex-pass" value="50" min="0"></div>
+      </div>
+      <div class="field" style="margin-top:10px;"><label>Edit Code (optional)</label>
+<div class="pw-wrap">
+  <input type="password" id="ex-editcode" placeholder="Code required to edit this exam" autocomplete="off">
+  <button class="pw-toggle" type="button" onclick="togglePwVis('ex-editcode',this)" title="Show/hide code">&#128218;</button>
+</div></div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+      <div style="font-weight:700;font-size:15px;color:var(--navy);">Questions</div>
+      <button class="btn-sm primary" onclick="addQuestion()">&#65291; Add Question</button>
+    </div>
+    <div id="questions-container"></div>
+  </div>
+</div>
+
+<!-- STUDENT DASHBOARD -->
+<div id="student-dash" class="screen">
+  <div class="stu-header">
+    <div class="stu-tabs" id="stu-tabs-bar">
+      <button class="stb active" onclick="stuTab('home')" id="stb-home">Home</button>
+      <button class="stb" onclick="stuTab('exams')" id="stb-exams">&#128203; Exams</button>
+      <button class="stb" onclick="stuTab('notes')" id="stb-notes">&#128196; Notes</button>
+      <button class="stb" onclick="stuTab('results')" id="stb-results">&#128202; Results</button>
+    </div>
+    <div class="dash-user-area" style="padding:0 14px;">
+      <span class="dash-uname" id="student-uname"></span>
+      <button class="dash-signout" onclick="logout()">Sign Out</button>
+    </div>
+  </div>
+  <div class="stu-body">
+    <div class="stu-panel active" id="stu-panel-home">
+      <div class="stu-welcome"><div class="stu-wname" id="stu-greeting">Welcome &#127891;</div><div class="stu-wsub">Nuel Academic Tutors &mdash; Student Portal</div></div>
+      <div class="stu-home-grid">
+        <div class="tac" onclick="stuTab('exams')"><div class="tac-icon">&#9997;&#65039;</div><div class="tac-title">Take Exams</div><div class="tac-desc">View available tests</div></div>
+        <div class="tac" onclick="stuTab('notes')"><div class="tac-icon">&#128196;</div><div class="tac-title">Download Notes</div><div class="tac-desc">Study resources</div></div>
+        <div class="tac" onclick="stuTab('results')"><div class="tac-icon">&#128202;</div><div class="tac-title">My Results</div><div class="tac-desc">Scores &amp; review</div></div>
+      </div>
+    </div>
+    <div class="stu-panel" id="stu-panel-exams"><div id="stu-exam-list"></div></div>
+    <div class="stu-panel" id="stu-panel-notes"><div id="stu-notes-list"></div></div>
+    <div class="stu-panel" id="stu-panel-results"><div id="stu-results-list"></div></div>
+
+  </div>
+</div>
+
+<!-- TAKE EXAM -->
+<div id="take-exam-screen" class="screen">
+  <div class="exam-sh">
+    <button class="ces-back" onclick="confirmExamBack()">&larr; Back</button>
+    <div class="exam-sname" id="taking-exam-name">Exam</div>
+    <div class="exam-timer-el" id="exam-timer-el" style="display:none;"></div>
+  </div>
+  <div class="exam-prog"><div class="exam-prog-fill" id="exam-prog-fill" style="width:0%"></div></div>
+  <div class="exam-body">
+    <div id="exam-question-display"></div>
+    <div class="exam-nav-row">
+      <button class="btn-nav" id="exam-prev-btn" onclick="examPrev()" disabled>&larr; Prev</button>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text3);"><span id="exam-q-num">1</span> / <span id="exam-q-total">1</span></span>
+      <button class="btn-nav" id="exam-next-btn" onclick="examNext()">Next &rarr;</button>
+    </div>
+    <button class="btn-nav submit" id="exam-submit-btn" onclick="submitExam()" style="width:100%;margin-top:12px;display:none;">Submit Exam &#10003;</button>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div id="results-screen" class="screen">
+  <div class="exam-sh"><button class="ces-back" onclick="goBackAfterResults()">&larr; Dashboard</button><div class="exam-sname">Your Results</div></div>
+  <div class="results-body">
+    <div class="result-hero">
+      <div class="rh-verdict" id="rh-verdict">Passed!</div>
+      <div class="rh-sub" id="rh-sub"></div>
+      <div class="score-ring-wrap"><div class="score-ring" id="rh-ring"><div class="score-center"><div class="score-num" id="rh-num">0</div><div class="score-denom" id="rh-denom">/ 100</div></div></div></div>
+    </div>
+    <div class="rst-grid">
+      <div class="rst-card"><div class="rst-val" id="rh-correct">0</div><div class="rst-lbl">Correct</div></div>
+      <div class="rst-card"><div class="rst-val" id="rh-wrong">0</div><div class="rst-lbl">Wrong</div></div>
+      <div class="rst-card"><div class="rst-val" id="rh-pct">0%</div><div class="rst-lbl">Accuracy</div></div>
+    </div>
+    <button class="btn-nav submit" style="width:100%;margin-bottom:14px;" onclick="goBackAfterResults()">Back to Dashboard</button>
+    <div class="review-sec">
+      <div id="review-locked-notice" class="review-locked"><span style="font-size:18px;">&#128274;</span><div><div style="font-weight:700;font-size:13px;color:var(--navy);margin-bottom:1px;">Answer Review Locked</div><div style="font-size:11px;color:var(--text2);">Go back to dashboard, then view corrections from My Results.</div></div></div>
+      <button class="review-toggle-btn" id="review-toggle-btn" style="display:none;margin-top:10px;" onclick="toggleReview()"><span>&#128214; View Answer Review</span><span id="review-arrow">&#9660;</span></button>
+      <div class="review-list" id="review-list"></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Firebase via CDN (compat mode) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/firebase.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/exam.js"></script>
+<script src="js/app.js"></script>
+
+
+<!-- LAYOUT CUSTOMIZER PANEL -->
+<div class="customizer-panel" id="customizer-panel">
+  <div class="customizer-head">
+    <div class="cust-head-title">&#9881;&#65039; Customize Layout</div>
+    <button class="cust-close" onclick="closeCustomizer()">&#10005;</button>
+  </div>
+  <div class="cust-body">
+
+    <div class="cust-sec">
+      <div class="cust-sec-title">&#127968; Home Screen Image</div>
+      <div style="margin-bottom:10px;">
+        <label class="img-upload-label" for="banner-img-upload">&#128247; Upload Banner Image<input type="file" id="banner-img-upload" accept="image/*" style="display:none;" onchange="handleBannerUpload(event)"></label>
+        <div id="banner-preview" style="margin-top:10px;display:none;"><img id="banner-preview-img" src="" style="width:100%;max-height:80px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--border2);"><button onclick="removeBanner()" style="margin-top:6px;background:none;border:none;color:var(--danger);font-size:11px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">&#128465; Remove image</button></div>
+      </div>
+    </div>
+
+    <div class="cust-sec">
+      <div class="cust-sec-title">&#127775; Brand Colors</div>
+      <div class="cust-row"><span class="cust-lbl">Primary (Navy)</span><input type="color" class="cust-color" id="c-navy" value="#0a1628"></div>
+      <div class="cust-row"><span class="cust-lbl">Accent (Gold)</span><input type="color" class="cust-color" id="c-gold" value="#c9a84c"></div>
+      <div class="cust-row"><span class="cust-lbl">Background</span><input type="color" class="cust-color" id="c-cream" value="#fdf8f0"></div>
+      <div class="cust-row"><span class="cust-lbl">Success Green</span><input type="color" class="cust-color" id="c-success" value="#22c55e"></div>
+    </div>
+
+    <div class="cust-sec">
+      <div class="cust-sec-title">&#128292; Button Sizes</div>
+      <div class="cust-row"><span class="cust-lbl">Border Radius</span><input type="range" class="cust-range" id="c-radius" min="0" max="24" value="8" oninput="livePreview()"><input class="cust-input" id="c-radius-val" value="8px" readonly style="width:46px;"></div>
+      <div class="cust-row"><span class="cust-lbl">Button Padding</span><input type="range" class="cust-range" id="c-btnpad" min="6" max="20" value="11" oninput="livePreview()"><input class="cust-input" id="c-btnpad-val" value="11px" readonly style="width:46px;"></div>
+      <div class="cust-row"><span class="cust-lbl">Button Font</span><input type="range" class="cust-range" id="c-btnfont" min="10" max="18" value="13" oninput="livePreview()"><input class="cust-input" id="c-btnfont-val" value="13px" readonly style="width:46px;"></div>
+    </div>
+
+    <div class="cust-sec">
+      <div class="cust-sec-title">&#128196; Cards &amp; Spacing</div>
+      <div class="cust-row"><span class="cust-lbl">Card Radius</span><input type="range" class="cust-range" id="c-cardradius" min="0" max="28" value="14" oninput="livePreview()"><input class="cust-input" id="c-cardradius-val" value="14px" readonly style="width:46px;"></div>
+      <div class="cust-row"><span class="cust-lbl">Card Shadow</span>
+        <select class="cust-input" id="c-shadow" onchange="livePreview()" style="width:90px;">
+          <option value="none">None</option>
+          <option value="sm">Light</option>
+          <option selected value="md">Medium</option>
+          <option value="lg">Strong</option>
+        </select>
+      </div>
+      <div class="cust-row"><span class="cust-lbl">Content Width</span>
+        <select class="cust-input" id="c-maxwidth" onchange="livePreview()" style="width:90px;">
+          <option value="760px">Narrow</option>
+          <option selected value="1060px">Normal</option>
+          <option value="1280px">Wide</option>
+          <option value="100%">Full</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="cust-sec">
+      <div class="cust-sec-title">&#128292; Font Sizes</div>
+      <div class="cust-row"><span class="cust-lbl">Body Text</span><input type="range" class="cust-range" id="c-bodyfs" min="12" max="18" value="14" oninput="livePreview()"><input class="cust-input" id="c-bodyfs-val" value="14px" readonly style="width:46px;"></div>
+      <div class="cust-row"><span class="cust-lbl">Heading Size</span><input type="range" class="cust-range" id="c-headfs" min="14" max="28" value="20" oninput="livePreview()"><input class="cust-input" id="c-headfs-val" value="20px" readonly style="width:46px;"></div>
+    </div>
+
+    <div class="cust-sec">
+      <div class="cust-sec-title">&#128100; Tab &amp; Nav Style</div>
+      <div class="cust-row"><span class="cust-lbl">Tab Font Size</span><input type="range" class="cust-range" id="c-tabfs" min="10" max="16" value="12" oninput="livePreview()"><input class="cust-input" id="c-tabfs-val" value="12px" readonly style="width:46px;"></div>
+      <div class="cust-row"><span class="cust-lbl">Tab Padding</span><input type="range" class="cust-range" id="c-tabpad" min="10" max="24" value="16" oninput="livePreview()"><input class="cust-input" id="c-tabpad-val" value="16px" readonly style="width:46px;"></div>
+      <div class="cust-row"><span class="cust-lbl">Header Height</span><input type="range" class="cust-range" id="c-headerh" min="40" max="80" value="54" oninput="livePreview()"><input class="cust-input" id="c-headerh-val" value="54px" readonly style="width:46px;"></div>
+    </div>
+
+    <button class="cust-btn save" onclick="saveCustomLayout()">&#128190; Save Layout</button>
+    <button class="cust-btn reset" onclick="resetCustomLayout()">&#8635; Reset to Default</button>
+  </div>
+</div>
+<button class="cust-trigger" id="cust-trigger" onclick="openCustomizer()" title="Customize Layout">&#9881;&#65039;</button>
+</body>
+</html>
