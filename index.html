@@ -145,23 +145,14 @@
         <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:#fff;margin-bottom:6px;">Connect Firebase</div>
         <div style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.6;">Paste your Firebase project config to enable cloud sync across all devices.</div>
       </div>
-      <div class="field" style="margin-bottom:10px;"><label style="color:rgba(255,255,255,0.6);">Firebase Config JSON</label>
-        <textarea id="fb-config-input" rows="8" placeholder='{
-  "apiKey": "...",
-  "authDomain": "...",
-  "projectId": "...",
-  "storageBucket": "...",
-  "messagingSenderId": "...",
-  "appId": "..."
-}' style="background:rgba(255,255,255,0.07);border:1.5px solid rgba(201,168,76,0.25);border-radius:var(--radius-sm);color:#fff;font-family:'JetBrains Mono',monospace;font-size:12px;padding:12px;width:100%;resize:vertical;outline:none;line-height:1.5;">{
-  apiKey: "AIzaSyAWlF83z03HI7hAC5xnuCe1qjljz6l_QbY",
+    <div class="field" style="margin-bottom:10px;"><label ...>Firebase Config JSON</label>
+  <textarea id="fb-config-input" rows="8" placeholder='{ ... }' style="...">{
+  apiKey: "AIzaSy...",
   authDomain: "nuel-academic-tutors.firebaseapp.com",
   projectId: "nuel-academic-tutors",
-  storageBucket: "nuel-academic-tutors.firebasestorage.app",
-  messagingSenderId: "735329597088",
-  appId: "1:735329597088:web:31e8066f0ab45571607bc5"
+  ...
 }</textarea>
-      </div>
+</div>
       <div id="fb-setup-err" style="font-size:12px;color:var(--danger);min-height:16px;margin-bottom:10px;font-family:'JetBrains Mono',monospace;"></div>
       <button class="btn-gold" style="width:100%;padding:14px;" onclick="connectFirebase()">Connect &amp; Continue</button>
       <button onclick="showScreen('landing')" style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:13px;cursor:pointer;margin-top:14px;width:100%;text-align:center;font-family:'Plus Jakarta Sans',sans-serif;">&larr; Back</button>
