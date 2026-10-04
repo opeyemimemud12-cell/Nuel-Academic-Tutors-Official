@@ -1,43 +1,32 @@
 // Firebase Setup
+var FB_CONFIG={
+  apiKey:"AIzaSyAWlF83z03HI7hAC5xnuCe1qjljz6l_QbY",
+  authDomain:"nuel-academic-tutors.firebaseapp.com",
+  projectId:"nuel-academic-tutors",
+  storageBucket:"nuel-academic-tutors.firebasestorage.app",
+  messagingSenderId:"735329597088",
+  appId:"1:735329597088:web:31e8066f0ab45571607bc5"
+};
+function initFirebaseApp(){
+  var app;try{app=firebase.app();}catch(e){app=firebase.initializeApp(FB_CONFIG);}
+  db=firebase.firestore();
+}
 function connectFirebase(){
-  if(typeof firebase==='undefined'){var errEl=Q('fb-setup-err');if(errEl)errEl.textContent='Firebase SDK not loaded. Please check your internet connection.';return;}
-  var raw=(Q('fb-config-input')?Q('fb-config-input').value:'').trim();
   var errEl=Q('fb-setup-err');
+  if(typeof firebase==='undefined'){if(errEl)errEl.textContent='Firebase SDK not loaded. Please check your internet connection.';return;}
   if(errEl)errEl.textContent='';
-  if(!raw){if(errEl)errEl.textContent='Paste your Firebase config first.';return;}
-  // Step 1: strip "const firebaseConfig = " and trailing semicolons
-  var cleaned=raw.replace(/^[\s\S]*?=\s*\{/,'{').replace(/\}\s*;?\s*$/,'}').trim();
-  if(cleaned.charAt(0)!=='{') cleaned=raw.trim();
-  // Step 2: Convert JS object syntax to JSON
-  // Add quotes around unquoted keys (apiKey: -> "apiKey":)
-  cleaned=cleaned.replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g,function(m,pre,key){return pre+'"'+key+'":';});
-  // Fix single-quoted strings to double-quoted
-  cleaned=cleaned.replace(/'([^']*)'/g,'"$1"');
-  // Remove trailing commas before } or ]
-  cleaned=cleaned.replace(/,(\s*[}\]])/g,'$1');
-  var cfg;
-  try{cfg=JSON.parse(cleaned);}catch(e){
-    if(errEl)errEl.textContent='Could not read config. Try copying again from Firebase — just the { ... } block.';
-    return;
-  }
-  if(!cfg||!cfg.projectId){if(errEl)errEl.textContent='Missing projectId in config. Make sure you copied the full config.';return;}
   try{
-    var app;try{app=firebase.app();}catch(e2){app=firebase.initializeApp(cfg);}
-    db=firebase.firestore();
-    localStorage.setItem('nat_fb_config',JSON.stringify(cfg));
-    if(errEl)errEl.textContent='';
+    initFirebaseApp();
+    localStorage.setItem('nat_fb_connected','1');
     toast('Connected! Loading...');
     setTimeout(function(){showScreen('role-select');},800);
   }catch(e){if(errEl)errEl.textContent='Connection failed: '+e.message;}
 }
 function tryAutoConnect(){
-  var saved=localStorage.getItem('nat_fb_config');
-  if(!saved)return false;
+  if(!localStorage.getItem('nat_fb_connected'))return false;
   try{
     if(typeof firebase==='undefined')return false;
-    var cfg=JSON.parse(saved);
-    var app;try{app=firebase.app();}catch(e){app=firebase.initializeApp(cfg);}
-    db=firebase.firestore();
+    initFirebaseApp();
     return true;
   }catch(e){return false;}
 }
