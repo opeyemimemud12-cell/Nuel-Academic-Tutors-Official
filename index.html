@@ -143,27 +143,11 @@
       <div style="text-align:center;margin-bottom:24px;">
         <div style="font-size:48px;margin-bottom:12px;">🔥</div>
         <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:#fff;margin-bottom:6px;">Connect Firebase</div>
-        <div style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.6;">Paste your Firebase project config to enable cloud sync across all devices.</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.6;">Connect to enable cloud sync across all devices.</div>
       </div>
-    <div class="field" style="margin-bottom:10px;"><label ...>Firebase Config JSON</label>
-  <textarea id="fb-config-input" rows="8" placeholder='{ ... }' style="...">{
-  apiKey: "AIzaSy...",
-  authDomain: "nuel-academic-tutors.firebaseapp.com",
-  projectId: "nuel-academic-tutors",
-  ...
-}</textarea>
-</div>
-      <div id="fb-setup-err" style="font-size:12px;color:var(--danger);min-height:16px;margin-bottom:10px;font-family:'JetBrains Mono',monospace;"></div>
+      <div id="fb-setup-err" style="font-size:12px;color:var(--danger);min-height:16px;margin-bottom:10px;font-family:'JetBrains Mono',monospace;text-align:center;"></div>
       <button class="btn-gold" style="width:100%;padding:14px;" onclick="connectFirebase()">Connect &amp; Continue</button>
       <button onclick="showScreen('landing')" style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:13px;cursor:pointer;margin-top:14px;width:100%;text-align:center;font-family:'Plus Jakarta Sans',sans-serif;">&larr; Back</button>
-      <div style="margin-top:16px;padding:12px;background:rgba(201,168,76,0.08);border-radius:var(--radius-sm);border-left:3px solid var(--gold);">
-        <div style="font-size:11px;color:rgba(255,255,255,0.5);line-height:1.8;">
-          &#8250; Create a project at <strong style="color:var(--gold)">console.firebase.google.com</strong><br>
-          &#8250; Enable Firestore Database (test mode to start)<br>
-          &#8250; Go to Project Settings &rarr; Your apps &rarr; Config<br>
-          &#8250; Copy the firebaseConfig object and paste above
-        </div>
-      </div>
     </div>
   </div>
 </div>
