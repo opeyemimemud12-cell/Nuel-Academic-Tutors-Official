@@ -260,8 +260,7 @@
       <button class="dtb" onclick="teacherTab('notes')" id="ttb-notes">Notes</button>
       <button class="dtb" onclick="teacherTab('exams')" id="ttb-exams">Exams</button>
       <button class="dtb" onclick="teacherTab('scores')" id="ttb-scores">Scores</button>
-      <button class="dtb" onclick="teacherTab('scores')" id="ttb-scores">Scores</button>
-<button class="dtb" onclick="teacherTab('quiz')" id="ttb-quiz">&#10024; Quiz Maker</button>
+      <button class="dtb" onclick="teacherTab('quiz')" id="ttb-quiz">&#10024; Quiz Maker</button>
     </div>
     <div class="dash-user-area">
       <span class="dash-uname" id="teacher-uname"></span>
@@ -300,6 +299,31 @@
     </div>
 
     <div class="tab-panel" id="teacher-panel-scores"><div class="section-title">Student Scores</div><div id="teacher-scores-body"></div></div>
+    <div class="tab-panel" id="teacher-panel-quiz">
+      <div class="section-title">Quiz Maker</div>
+      <div class="card" style="margin-bottom:14px;">
+        <div style="font-size:12px;color:var(--text3);margin-bottom:14px;line-height:1.6;">Turn a PDF note into a multiple-choice exam using a small on-device AI (a trained language tagger plus word-meaning model). It picks key terms and similar-sounding wrong options. No data leaves the browser. Always review before publishing.</div>
+        <div class="field"><label>Use an uploaded note</label><select id="qm-note" onchange="qmPickNote()"><option value="">— Choose an uploaded PDF note —</option></select></div>
+        <div class="field"><label>Or upload a PDF</label><input type="file" id="qm-file" accept="application/pdf" onchange="qmPickFile(event)"></div>
+        <div class="field"><label>Or paste text</label><textarea id="qm-paste" rows="3"></textarea></div>
+        <div class="add-user-grid" style="gap:12px;">
+          <div class="field" style="grid-column:1/-1;"><label>Exam Name</label><input type="text" id="qm-name" placeholder="e.g. Biology Term 2 Test"></div>
+          <div class="field"><label>Time Allotted (minutes, 0=off)</label><input type="number" id="qm-timer" value="30" min="0"></div>
+          <div class="field"><label>Number of Questions</label><input type="number" id="qm-count" value="10" min="1" max="100"></div>
+          <div class="field"><label>Max Score</label><input type="number" id="qm-max" value="100" min="1"></div>
+          <div class="field"><label>Pass Score</label><input type="number" id="qm-pass" value="50" min="0"></div>
+        </div>
+        <button class="btn-add gold" onclick="qmGenerate()">&#10024; Generate Questions</button>
+        <div id="qm-msg" style="font-size:12px;margin-top:10px;min-height:16px;color:var(--text3);"></div>
+      </div>
+      <div class="card" id="qm-out" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px;">
+          <strong id="qm-count-lbl" style="color:var(--navy);"></strong>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn-sm" onclick="qmDownload()">&#11015; Download JSON</button><button class="btn-sm primary" onclick="qmSave()">&#128190; Save as Draft Exam</button></div>
+        </div>
+        <div id="qm-list"></div>
+      </div>
+    </div>
 
   </div>
 </div>
@@ -422,6 +446,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="js/app.js"></script>
 <script src="js/notes.js"></script>
+<script src="js/quizmaker.js"></script>
 
 
 <!-- LAYOUT CUSTOMIZER PANEL -->
