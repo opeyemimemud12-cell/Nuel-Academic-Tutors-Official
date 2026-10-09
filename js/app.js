@@ -1,5 +1,5 @@
 // ADMIN
-function enterAdminDash(){Q('admin-uname').textContent=currentUser.email;Q('admin-greeting').textContent=currentUser.name;adminTab('add-user');showScreen('admin-dash');}
+function enterAdminDash(){try{refreshCorrectionStatus();}catch(e){}Q('admin-uname').textContent=currentUser.email;Q('admin-greeting').textContent=currentUser.name;adminTab('add-user');showScreen('admin-dash');}
 function adminTab(tab){
   document.querySelectorAll('[id^="atb-"]').forEach(function(b){b.classList.remove('active');});
   document.querySelectorAll('[id^="admin-panel-"]').forEach(function(p){p.classList.remove('active');});
@@ -9,6 +9,8 @@ function adminTab(tab){
   if(tab==='reset-exams')renderAdminResetExams();
   if(tab==='session-log')renderAdminSessionLog();
   if(tab==='access-code')renderAccessCodeTab();
+  if(tab==='correction')renderCorrectionTab();
+  if(tab==='end-exams')renderEndExamsTab();else stopEndExamsListener();
 }
 function addUser(role){
   var p=role==='teacher'?'at':'as';
@@ -422,9 +424,10 @@ function renderTeacherScores(){
   Promise.all([loadUsers(),loadExams()]).then(function(){
     var students=_users.filter(function(u){return u.role==='student';});
     var rows='';
-    students.forEach(function(stu){_exams.forEach(function(ex){var prog=(ex.studentProgress||{})[stu.id];if(prog){var pct=ex.questions.length>0?Math.round((prog.correct/ex.questions.length)*100):0;rows+='<tr><td>'+esc(stu.name)+'</td><td>'+esc(ex.name)+'</td><td style="font-weight:700;color:'+(prog.passed?'var(--success)':'var(--danger)')+'">'+prog.score+'/'+ex.maxScore+'</td><td>'+pct+'%</td><td><span class="chip-pass '+(prog.passed?'pass':'fail')+'">'+(prog.passed?'&#10003; Pass':'&#10005; Fail')+'</span></td><td style="font-size:11px;color:var(--text3)">'+(prog.submittedAt?new Date(prog.submittedAt).toLocaleDateString():'-')+'</td></tr>';}});});
-    cont.innerHTML=rows?'<div style="overflow-x:auto;background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border2)"><table class="scores-table"><thead><tr><th>Student</th><th>Exam</th><th>Score</th><th>%</th><th>Result</th><th>Date</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+    students.forEach(function(stu){_exams.forEach(function(ex){var prog=(ex.studentProgress||{})[stu.id];if(prog){var pct=ex.questions.length>0?Math.round((prog.correct/ex.questions.length)*100):0;rows+='<tr><td>'+esc(stu.name)+'</td><td>'+esc(ex.name)+'</td><td style="font-weight:700;color:'+(prog.passed?'var(--success)':'var(--danger)')+'">'+prog.score+'/'+ex.maxScore+'</td><td>'+pct+'%</td><td><span class="chip-pass '+(prog.passed?'pass':'fail')+'">'+(prog.passed?'&#10003; Pass':'&#10005; Fail')+'</span></td><td style="font-size:11px;color:var(--text3)">'+(prog.submittedAt?new Date(prog.submittedAt).toLocaleDateString():'-')+'</td><td><button class="btn-sm primary" data-tview-ex="'+ex.id+'" data-tview-stu="'+stu.id+'">&#128214; View Answers</button></td></tr>';}});});
+    cont.innerHTML=rows?'<div style="overflow-x:auto;background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border2)"><table class="scores-table"><thead><tr><th>Student</th><th>Exam</th><th>Score</th><th>%</th><th>Result</th><th>Date</th><th>Answers</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
       :'<div class="empty-state"><div class="empty-icon">&#128202;</div><div class="empty-title">No Scores Yet</div></div>';
+    if(!cont._tviewBound){cont._tviewBound=true;cont.addEventListener('click',function(e){var b=e.target.closest('[data-tview-ex]');if(b)openTeacherReview(b.getAttribute('data-tview-ex'),b.getAttribute('data-tview-stu'));});}
   }).catch(function(){cont.innerHTML='<div class="empty-state"><div class="empty-title">Error</div></div>';});
 }
 
@@ -494,12 +497,13 @@ function renderStuNotes(){
 function renderStuResults(){
   var cont=Q('stu-results-list');
   cont.innerHTML='<div style="padding:12px;text-align:center;color:var(--text3)">Loading...</div>';
-  loadExams().then(function(){
+  Promise.all([loadExams(),getConfig('correction_visibility')]).then(function(r){
+    var corrOn=(r[1]===true);
     var completed=_exams.filter(function(e){return (e.studentProgress||{})[currentUser.id]&&(e.studentProgress||{})[currentUser.id].completed;});
     if(!completed.length){cont.innerHTML='<div class="empty-state"><div class="empty-icon">&#128202;</div><div class="empty-title">No Results Yet</div></div>';return;}
     cont.innerHTML=completed.map(function(ex){
       var prog=(ex.studentProgress||{})[currentUser.id];var pct=ex.questions.length>0?Math.round((prog.correct/ex.questions.length)*100):0;
-      var reviewBtn=(reviewUnlocked&&prog.lastAnswers)?'<button class="btn-sm primary" data-review="'+ex.id+'" style="margin-top:12px">&#128214; View Corrections</button>':'';
+      var reviewBtn=(corrOn&&prog.lastAnswers)?'<button class="btn-sm primary" data-review="'+ex.id+'" style="margin-top:12px">&#128214; View Corrections</button>':'';
       return '<div class="rcs"><div class="rcs-top"><div><div class="rcs-name">'+esc(ex.name)+'</div><div style="font-size:10px;color:var(--text3)">'+(prog.submittedAt?new Date(prog.submittedAt).toLocaleString():'')+'</div></div>'
         +'<div style="text-align:right"><div class="rcs-score" style="color:'+(prog.passed?'var(--success)':'var(--danger)')+'">'+prog.score+'/'+ex.maxScore+'</div>'
         +'<span class="chip-pass '+(prog.passed?'pass':'fail')+'">'+(prog.passed?'&#10003; Passed':'&#10005; Failed')+'</span></div></div>'
@@ -508,10 +512,10 @@ function renderStuResults(){
         +'<div class="rcs-bar"><div class="rcs-val">'+pct+'%</div><div class="rcs-lbl">Accuracy</div></div></div>'
         +reviewBtn+'</div>';
     }).join('');
-    cont.addEventListener('click',function(e){var rb=e.target.closest('[data-review]');if(rb)openReviewModal(rb.getAttribute('data-review'));});
+    if(!cont._revBound){cont._revBound=true;cont.addEventListener('click',function(e){var rb=e.target.closest('[data-review]');if(rb)openReviewModal(rb.getAttribute('data-review'));});}
   }).catch(function(){cont.innerHTML='<div class="empty-state"><div class="empty-title">Error</div></div>';});
 }
-function openReviewModal(examId){loadExams().then(function(){var ex=_exams.find(function(e){return e.id===examId;});if(!ex)return;var prog=(ex.studentProgress||{})[currentUser.id];if(!prog||!prog.lastAnswers)return;showModal('<div style="max-height:72vh;overflow-y:auto"><div class="modal-title">&#128214; '+esc(ex.name)+'</div><div style="margin-top:12px">'+buildReviewHTML(ex,prog.lastAnswers)+'</div><button class="modal-btn primary" onclick="closeModal()" style="width:100%;margin-top:14px">Close</button></div>');});}
+function openReviewModal(examId){Promise.all([loadExams(),getConfig('correction_visibility')]).then(function(r){if(r[1]!==true){toast('Corrections are currently turned off by the admin.','error');renderStuResults();return;}var ex=_exams.find(function(e){return e.id===examId;});if(!ex)return;var prog=(ex.studentProgress||{})[currentUser.id];if(!prog||!prog.lastAnswers)return;showModal('<div style="max-height:72vh;overflow-y:auto"><div class="modal-title">&#128214; '+esc(ex.name)+'</div><div style="margin-top:12px">'+buildReviewHTML(ex,prog.lastAnswers)+'</div><button class="modal-btn primary" onclick="closeModal()" style="width:100%;margin-top:14px">Close</button></div>');});}
 
 
 // INIT
