@@ -90,7 +90,7 @@ function renderAdminResetExams(){
           +'<button class="btn-reset" data-examid="'+ex.id+'" data-stuid="'+stu.id+'"'+(done?'':' disabled')+'>Reset</button></div>';
       }).join('')||'<div style="padding:10px;font-size:13px;color:var(--text3)">No exams yet.</div>';
       return '<div class="sc"><div class="sc-header" data-toggle="rst'+si+'"><div class="uli-av student">'+stu.name.charAt(0)+'</div>'
-        +'<div style="flex:1"><div style="font-weight:700;font-size:13px;color:var(--navy)">'+esc(stu.name)+'</div>'
+        +'<div style="flex:1"><div style="font-weight:700;font-size:13px;color:var(--ink)">'+esc(stu.name)+'</div>'
         +'<div style="font-size:10px;color:var(--text3)">'+esc(stu.email)+'</div></div>'
         +'<span style="color:var(--text3)">&#9660;</span></div>'
         +'<div class="sc-body" id="rst'+si+'">'+rows+'</div></div>';
@@ -122,7 +122,7 @@ function renderAdminSessionLog(){
       var sessHtml=sessions.length===0?'<div style="padding:10px;font-size:12px;color:var(--text3)">No sessions yet.</div>'
         :sessions.map(function(s,idx){return '<div class="slog-entry"><span style="color:var(--gold);font-weight:700">Session '+(idx+1)+' &#8212; '+(s.examName||'Unknown')+'</span>\nDate      : '+(s.submittedAt?new Date(s.submittedAt).toLocaleString():'N/A')+'\nCandidate : '+(s.candidate||stu.name)+'\nScore     : '+(s.score!==undefined?s.score+'/'+s.maxScore:'N/A')+'\nPassed    : '+(s.passed===true?'Yes &#10003;':s.passed===false?'No &#10005;':'N/A')+'\n&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;\nTab Switches: '+(s.tabSwitches||0)+'\nKeystrokes  : '+(s.keystrokes||0)+'</div>';}).join('');
       return '<div class="sc"><div class="sc-header" data-toggle="slog'+si+'"><div class="uli-av student">'+stu.name.charAt(0)+'</div>'
-        +'<div style="flex:1"><div style="font-weight:700;font-size:13px;color:var(--navy)">'+esc(stu.name)+'</div>'
+        +'<div style="flex:1"><div style="font-weight:700;font-size:13px;color:var(--ink)">'+esc(stu.name)+'</div>'
         +'<div style="font-size:10px;color:var(--text3)">'+sessions.length+' session'+(sessions.length!==1?'s':'')+'</div></div>'
         +'<span style="color:var(--text3)">&#9660;</span></div>'
         +'<div class="sc-body" id="slog'+si+'" style="padding-top:4px">'+sessHtml+'</div></div>';
@@ -133,8 +133,8 @@ function renderAdminSessionLog(){
 function renderAccessCodeTab(){
   getConfig('access_code').then(function(code){
     var statusEl=Q('access-code-status');if(!statusEl)return;
-    if(code){statusEl.innerHTML='<div style="display:flex;align-items:center;gap:10px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);border-radius:var(--radius-sm);padding:12px 16px;"><span style="font-size:20px;">&#128274;</span><div><div style="font-weight:700;font-size:13px;color:var(--navy);">Active</div><div style="font-size:12px;color:var(--text3);">Code: <strong style="color:var(--success);font-family:JetBrains Mono,monospace;">'+esc(code)+'</strong></div></div></div>';}
-    else{statusEl.innerHTML='<div style="display:flex;align-items:center;gap:10px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);padding:12px 16px;"><span style="font-size:20px;">&#128275;</span><div><div style="font-weight:700;font-size:13px;color:var(--navy);">No Code Set</div><div style="font-size:12px;color:var(--text3);">Students log in freely.</div></div></div>';}
+    if(code){statusEl.innerHTML='<div style="display:flex;align-items:center;gap:10px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);border-radius:var(--radius-sm);padding:12px 16px;"><span style="font-size:20px;">&#128274;</span><div><div style="font-weight:700;font-size:13px;color:var(--ink);">Active</div><div style="font-size:12px;color:var(--text3);">Code: <strong style="color:var(--success);font-family:JetBrains Mono,monospace;">'+esc(code)+'</strong></div></div></div>';}
+    else{statusEl.innerHTML='<div style="display:flex;align-items:center;gap:10px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);padding:12px 16px;"><span style="font-size:20px;">&#128275;</span><div><div style="font-weight:700;font-size:13px;color:var(--ink);">No Code Set</div><div style="font-size:12px;color:var(--text3);">Students log in freely.</div></div></div>';}
   });
 }
 function setAccessCode(){var inp=Q('new-access-code');var code=(inp?inp.value:'').trim();if(!code){toast('Enter a code first.','error');return;}loading(true,'Saving...');setConfig('access_code',code).then(function(){if(inp)inp.value='';toast('Access code set!');loading(false);renderAccessCodeTab();}).catch(function(e){toast('Error: '+e.message,'error');loading(false);});}
@@ -353,7 +353,7 @@ function importExamJSON(event){
       +'<div class="modal-sub">Ready to import <strong>'+esc(data.name)+'</strong><br>'
       +data.questions.length+' questions &middot; Max score: '+(data.maxScore||100)+' &middot; Pass: '+(data.passScore||50)+'</div>'
       +'<div style="background:var(--cream);border-radius:var(--radius-sm);padding:12px 14px;font-size:12px;color:var(--text2);margin-bottom:14px;">'
-      +'<strong style="color:var(--navy);">Import as:</strong><br>'
+      +'<strong style="color:var(--ink);">Import as:</strong><br>'
       +'<label style="display:flex;align-items:center;gap:8px;margin-top:8px;cursor:pointer;"><input type="radio" name="import-status" value="draft" checked> &#128190; Draft (students cannot see it yet)</label>'
       +'<label style="display:flex;align-items:center;gap:8px;margin-top:6px;cursor:pointer;"><input type="radio" name="import-status" value="published"> &#9989; Published (students can take it immediately)</label>'
       +'</div>'
@@ -487,7 +487,7 @@ function renderStuNotes(){
   cont.innerHTML='<div style="padding:12px;text-align:center;color:var(--text3)">Loading...</div>';
   loadNotes().then(function(){
     if(!_notes.length){cont.innerHTML='<div class="empty-state"><div class="empty-icon">&#128196;</div><div class="empty-title">No Notes Available</div></div>';return;}
-    cont.innerHTML=_notes.map(function(n){return '<div class="note-card-stu"><div style="font-size:26px">'+fileIcon(n.name)+'</div><div style="flex:1;min-width:80px"><div style="font-weight:700;font-size:13px;color:var(--navy)">'+esc(n.name)+'</div><div style="font-size:10px;color:var(--text3)">'+fmtSize(n.size)+' &middot; '+(n.uploadedBy||'Teacher')+'</div></div><button class="btn-dl" data-noteid="'+n.id+'">&#11015; Download</button></div>';}).join('');
+    cont.innerHTML=_notes.map(function(n){return '<div class="note-card-stu"><div style="font-size:26px">'+fileIcon(n.name)+'</div><div style="flex:1;min-width:80px"><div style="font-weight:700;font-size:13px;color:var(--ink)">'+esc(n.name)+'</div><div style="font-size:10px;color:var(--text3)">'+fmtSize(n.size)+' &middot; '+(n.uploadedBy||'Teacher')+'</div></div><button class="btn-dl" data-noteid="'+n.id+'">&#11015; Download</button></div>';}).join('');
     cont.addEventListener('click',function(e){var db2=e.target.closest('[data-noteid]');if(db2)downloadNote(db2.getAttribute('data-noteid'));});
   }).catch(function(){cont.innerHTML='<div class="empty-state"><div class="empty-title">Error</div></div>';});
 }
