@@ -188,6 +188,8 @@
       <button class="dtb" onclick="adminTab('reset-exams')" id="atb-reset-exams">Reset Exams</button>
       <button class="dtb" onclick="adminTab('session-log')" id="atb-session-log">Session Log</button>
       <button class="dtb" onclick="adminTab('access-code')" id="atb-access-code">&#128274; Access Code</button>
+      <button class="dtb" onclick="adminTab('correction')" id="atb-correction">&#128065; Correction Visibility</button>
+      <button class="dtb" onclick="adminTab('end-exams')" id="atb-end-exams">&#9209; End Exams</button>
     </div>
     <div class="dash-user-area">
       <span class="dash-uname" id="admin-uname"></span>
@@ -196,6 +198,7 @@
   </div>
   <div class="dash-body">
     <div class="welcome-banner"><div><div class="wb-title">Welcome, <span id="admin-greeting" style="color:var(--gold)">Administrator</span> &#128737;&#65039;</div><div class="wb-sub">Nuel Academic Tutors &mdash; Admin Control Panel</div></div><div style="font-size:44px">&#128737;&#65039;</div></div>
+    <div id="correction-status-line" style="font-size:11px;color:var(--text3);margin:0 0 14px 2px;">Correction visibility: <strong>checking...</strong></div>
     <div class="tab-panel active" id="admin-panel-add-user">
       <div class="section-title">Add New User</div>
       <div class="add-user-grid">
@@ -224,7 +227,23 @@
     <div class="tab-panel" id="admin-panel-user-list"><div class="section-title">All Users</div><div id="admin-user-list-body"></div></div>
     <div class="tab-panel" id="admin-panel-reset-exams"><div class="section-title">Reset Exams Per Student</div><div id="admin-reset-body"></div></div>
     <div class="tab-panel" id="admin-panel-session-log"><div class="section-title">Student Session Logs</div><div id="admin-session-body"></div></div>
-    <div class="tab-panel" id="admin-panel-access-code">
+        <div class="tab-panel" id="admin-panel-correction">
+      <div class="section-title">Correction Visibility</div>
+      <div class="card" style="max-width:560px;">
+        <div style="font-size:12px;color:var(--text3);margin-bottom:16px;">When ON, students can see which answers they got right and wrong (including what they picked). When OFF, students only see their score. Teachers can always see every student's answers.</div>
+        <div id="correction-tab-status" style="margin-bottom:16px;"></div>
+        <button class="btn-add" id="correction-toggle-btn" style="width:100%;" onclick="toggleCorrectionVisibility()">Loading...</button>
+      </div>
+    </div>
+    <div class="tab-panel" id="admin-panel-end-exams">
+      <div class="section-title">End Exams</div>
+      <div class="card" style="max-width:640px;margin-bottom:16px;">
+        <div style="font-size:12px;color:var(--text3);margin-bottom:14px;">Shows students who are writing an exam right now. Ending an exam submits whatever they have answered so far.</div>
+        <button class="btn-add" style="width:100%;background:var(--danger);" onclick="endExamsConfirm(null)">&#9209; End All Active Exams</button>
+      </div>
+      <div id="active-exams-body" style="max-width:640px;"></div>
+    </div>
+<div class="tab-panel" id="admin-panel-access-code">
       <div class="section-title">Student Access Code</div>
       <div class="card" style="max-width:560px;margin-bottom:20px;">
         <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">
@@ -447,6 +466,7 @@
 <script src="js/exam.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="js/app.js"></script>
+<script src="js/control.js"></script>
 <script src="js/notes.js"></script>
 <script src="js/quizmaker.js"></script>
 <script src="js/theme.js"></script>
