@@ -6,6 +6,8 @@
   window.toggleTheme=function(){var n=cur()==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);
     try{localStorage.setItem('nat_theme',n);}catch(e){}paint();};
   paint();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',paint);
+  window.addEventListener('load',paint);
   try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(e){
     if(!localStorage.getItem('nat_theme')){document.documentElement.setAttribute('data-theme',e.matches?'dark':'light');paint();}});}catch(e){}
 })();
