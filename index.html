@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>try{if(localStorage.getItem("nat_session"))document.documentElement.classList.add("restoring");}catch(e){}</script>
 <script>try{var _t=localStorage.getItem("nat_theme")||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");document.documentElement.setAttribute("data-theme",_t);}catch(e){}</script>
 <title>Nuel Academic Tutors — FluentAT</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
@@ -449,10 +450,11 @@
 <script src="js/notes.js"></script>
 <script src="js/quizmaker.js"></script>
 <script src="js/theme.js"></script>
+<script src="js/session.js"></script>
 
 
 <button id="theme-toggle" class="theme-toggle" type="button" onclick="toggleTheme()">&#127769;</button>
-  
+
 <!-- LAYOUT CUSTOMIZER PANEL -->
 <div class="customizer-panel" id="customizer-panel">
   <div class="customizer-head">
