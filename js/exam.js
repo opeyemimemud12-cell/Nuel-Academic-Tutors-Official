@@ -44,6 +44,7 @@ function beginExam(id){
     else if(Q('exam-timer-el'))Q('exam-timer-el').style.display='none';
     showScreen('take-exam-screen');renderExamQ();
     proctor.start(ex.name,name);
+    startSessionTracking(ex,name);
   });
 }
 var examEndsAt=0;
@@ -156,7 +157,7 @@ function selectAnswer(l){
 }
 function examPrev(){if(examQIdx>0){examQIdx--;renderExamQ();}}
 function examNext(){var ex=_currentExamCache||_exams.find(function(e){return e.id===currentExamId;});if(ex&&examQIdx<ex.questions.length-1){examQIdx++;renderExamQ();}}
-function confirmExamBack(){if(!examSubmitted&&examAnswers.some(function(a){return a!==null;})){if(!confirm('Leave? Progress will be lost.'))return;}clearExamTimer();proctor.stop('back');enterStudentDash();}
+function confirmExamBack(){if(!examSubmitted&&examAnswers.some(function(a){return a!==null;})){if(!confirm('Leave? Progress will be lost.'))return;}clearExamTimer();proctor.stop('back');stopSessionTracking();enterStudentDash();}
 function submitExam(auto){
   if(examSubmitted||examSubmitInFlight)return;
   if(!auto){var u=examAnswers.filter(function(a){return a===null;}).length;if(u>0){if(!confirm(u+' question'+(u!==1?'s':'')+' unanswered. Submit anyway?'))return;}}
@@ -177,7 +178,9 @@ function submitExam(auto){
           if(uDoc){var sess=(uDoc.sessions||[]).concat([Object.assign({},proctor.session,{examName:ex.name,score:score,maxScore:ex.maxScore,passed:passed,submittedAt:new Date().toISOString()})]);return saveUser(Object.assign({},uDoc,{sessions:sess}));}
         });
       }
-    }).then(function(){
+    }).then(function(){return getConfig('correction_visibility');}).then(function(vis){
+      var showCorr=(vis===true);
+      stopSessionTracking();
       proctor.stop(auto?'auto':'manual');
       var deg=Math.round((pct/100)*360),color=passed?'#c9a84c':'#ef4444';
       var v=Q('rh-verdict');if(v){v.textContent=passed?'Passed! &#127881;':'Not Passed';v.className='rh-verdict '+(passed?'pass':'fail');}
@@ -189,20 +192,22 @@ function submitExam(auto){
       if(Q('rh-wrong'))Q('rh-wrong').textContent=total-correct;
       if(Q('rh-pct'))Q('rh-pct').textContent=pct+'%';
       var rl=Q('review-list');if(rl){rl.innerHTML=buildReviewHTML(ex,examAnswers);rl.classList.remove('open');}
-      if(Q('review-locked-notice'))Q('review-locked-notice').style.display='flex';
-      if(Q('review-toggle-btn'))Q('review-toggle-btn').style.display='none';
-      if(auto)toast('&#9888;&#65039; Auto-submitted — tab switch detected!','error');
+      if(Q('review-locked-notice'))Q('review-locked-notice').style.display=showCorr?'none':'flex';
+      if(Q('review-toggle-btn'))Q('review-toggle-btn').style.display=showCorr?'flex':'none';
+      if(!showCorr&&rl)rl.innerHTML='';
+      if(window.__endedByAdmin){toast('Your exam was ended by an administrator and your answers were submitted.','error');window.__endedByAdmin=false;}else if(auto)toast('&#9888;&#65039; Auto-submitted — tab switch detected!','error');
       loading(false);showScreen('results-screen');
       examSubmitInFlight=false;
     });
-  }).catch(function(e){toast('Save error: '+e.message,'error');loading(false);examSubmitInFlight=false;});
+  }).catch(function(e){toast('Save error: '+e.message,'error');loading(false);examSubmitInFlight=false;stopSessionTracking();});
 }
-function buildReviewHTML(ex,answers){
+function buildReviewHTML(ex,answers,wrongTag){
+  wrongTag=wrongTag||'Yours';
   return ex.questions.map(function(q,i){
     var ua=answers[i],isC=ua===q.correct,isSk=ua===null;
     var sc=isSk?'skipped':isC?'correct':'wrong',sl=isSk?'Skipped':isC?'&#10003; Correct':'&#10005; Wrong';
-    var opts=q.opts.map(function(opt,oi){var l=['A','B','C','D'][oi];var isCorr=l===q.correct;var isW=l===ua&&!isC;return '<div class="rc-opt'+(isCorr?' correct':isW?' wrong':'')+'">'+'<span class="rc-opt-key">'+l+'</span><span style="flex:1">'+esc(opt)+'</span>'+(isCorr?'<span class="rc-opt-tag">&#10003; Correct</span>':isW?'<span class="rc-opt-tag">&#10005; Yours</span>':'')+'</div>';}).join('');
-    return '<div class="rc"><div class="rc-head"><span style="font-size:10px;font-weight:700;color:var(--gold)">Q'+(i+1)+'</span><span style="flex:1;font-size:12px;font-weight:700;color:var(--navy);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-left:8px">'+(q.text.length>50?q.text.slice(0,50)+'...':q.text)+'</span><span class="rc-status '+sc+'">'+sl+'</span></div><div class="rc-body"><div class="rc-q">'+esc(q.text)+'</div>'+opts+(isSk?'<div style="margin-top:7px;font-size:10px;color:var(--text3)">Not answered — Correct: <strong style="color:var(--success)">'+q.correct+'</strong></div>':'')+'</div></div>';
+    var opts=q.opts.map(function(opt,oi){var l=['A','B','C','D'][oi];var isCorr=l===q.correct;var isW=l===ua&&!isC;return '<div class="rc-opt'+(isCorr?' correct':isW?' wrong':'')+'">'+'<span class="rc-opt-key">'+l+'</span><span style="flex:1">'+esc(opt)+'</span>'+(isCorr?'<span class="rc-opt-tag">&#10003; Correct</span>':isW?'<span class="rc-opt-tag">&#10005; '+wrongTag+'</span>':'')+'</div>';}).join('');
+    return '<div class="rc"><div class="rc-head"><span style="font-size:10px;font-weight:700;color:var(--gold)">Q'+(i+1)+'</span><span style="flex:1;font-size:12px;font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-left:8px">'+(q.text.length>50?q.text.slice(0,50)+'...':q.text)+'</span><span class="rc-status '+sc+'">'+sl+'</span></div><div class="rc-body"><div class="rc-q">'+esc(q.text)+'</div>'+opts+(isSk?'<div style="margin-top:7px;font-size:10px;color:var(--text3)">Not answered — Correct: <strong style="color:var(--success)">'+q.correct+'</strong></div>':'')+'</div></div>';
   }).join('');
 }
 function goBackAfterResults(){if(examSubmitted&&currentExamId)reviewUnlocked=true;examSubmitted=false;examSubmitInFlight=false;enterStudentDash();stuTab('results');}
