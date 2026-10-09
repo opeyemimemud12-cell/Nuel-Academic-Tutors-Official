@@ -97,20 +97,28 @@ function renderAdminResetExams(){
         +'<span style="color:var(--text3)">&#9660;</span></div>'
         +'<div class="sc-body" id="rst'+si+'">'+rows+'</div></div>';
     }).join('');
-    cont.addEventListener('click',function(e){
+    if(!cont._rstBound){cont._rstBound=true;cont.addEventListener('click',function(e){
       var tog=e.target.closest('[data-toggle]');if(tog)toggleEl(tog.getAttribute('data-toggle'));
       var rb=e.target.closest('[data-examid]');if(rb&&!rb.disabled)adminResetExam(rb.getAttribute('data-examid'),rb.getAttribute('data-stuid'));
-    });
+    });}
   }).catch(function(){cont.innerHTML='<div class="empty-state"><div class="empty-title">Error</div></div>';});
 }
 function adminResetExam(examId,stuId){
   loading(true,'Resetting...');
-  loadExams().then(function(){
-    var ex=_exams.find(function(e){return e.id===examId;});if(!ex){loading(false);return;}
-    // merge:true never removes nested keys, so delete the student's entry explicitly
-    var upd={};upd['studentProgress.'+stuId]=firebase.firestore.FieldValue.delete();
-    return db.collection('exams').doc(String(examId)).update(upd);
-  }).then(function(){toast('Exam reset.');loading(false);renderAdminResetExams();}).catch(function(e){toast('Error: '+e.message,'error');loading(false);});
+  var ref=db.collection('exams').doc(String(examId));
+  ref.get().then(function(d){
+    if(!d.exists){throw new Error('Exam not found.');}
+    // update() with a whole map REPLACES it (unlike set+merge, which can never delete a key)
+    var prog=Object.assign({},(d.data()||{}).studentProgress||{});
+    Object.keys(prog).forEach(function(k){if(String(k)===String(stuId))delete prog[k];});
+    return ref.update({studentProgress:prog});
+  }).then(function(){
+    return ref.get(); // verify it really is gone from the database
+  }).then(function(d){
+    var still=((d.data()||{}).studentProgress||{})[stuId];
+    if(still){throw new Error('Reset did not save. Check your Firestore rules allow updating the exams collection.');}
+    toast('Exam reset. The student can retake it now.');loading(false);renderAdminResetExams();
+  }).catch(function(e){toast('Reset error: '+e.message,'error');loading(false);});
 }
 
 // Session log — use data attributes
