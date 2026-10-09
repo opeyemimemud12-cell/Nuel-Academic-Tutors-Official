@@ -107,8 +107,9 @@ function adminResetExam(examId,stuId){
   loading(true,'Resetting...');
   loadExams().then(function(){
     var ex=_exams.find(function(e){return e.id===examId;});if(!ex){loading(false);return;}
-    var prog=Object.assign({},ex.studentProgress||{});delete prog[stuId];
-    return saveExamDoc(Object.assign({},ex,{studentProgress:prog}));
+    // merge:true never removes nested keys, so delete the student's entry explicitly
+    var upd={};upd['studentProgress.'+stuId]=firebase.firestore.FieldValue.delete();
+    return db.collection('exams').doc(String(examId)).update(upd);
   }).then(function(){toast('Exam reset.');loading(false);renderAdminResetExams();}).catch(function(e){toast('Error: '+e.message,'error');loading(false);});
 }
 
