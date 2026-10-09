@@ -116,7 +116,7 @@ function qmGenerate(){
 function qmDraw(){
   var box=Q('qm-out');box.style.display=QM.qs.length?'block':'none';
   Q('qm-list').innerHTML=QM.qs.map(function(q,i){
-    return '<div style="border-top:1px solid var(--border2);padding:12px 0;"><div style="display:flex;gap:8px;justify-content:space-between;"><b style="font-size:13px;color:var(--navy);">'+(i+1)+'. '+esc(q.text)+'</b><button class="btn-del" data-qmdel="'+i+'" title="Remove">&#10005;</button></div>'
+    return '<div style="border-top:1px solid var(--border2);padding:12px 0;"><div style="display:flex;gap:8px;justify-content:space-between;"><b style="font-size:13px;color:var(--ink);">'+(i+1)+'. '+esc(q.text)+'</b><button class="btn-del" data-qmdel="'+i+'" title="Remove">&#10005;</button></div>'
      +q.opts.map(function(o,j){var c='ABCD'[j]===q.correct;return '<div style="font-size:12px;padding:2px 0;color:'+(c?'var(--success)':'var(--text2)')+';'+(c?'font-weight:700;':'')+'">'+'ABCD'[j]+'. '+esc(o)+'</div>';}).join('')+'</div>';}).join('');
   Q('qm-count-lbl').textContent=QM.qs.length+' question'+(QM.qs.length!==1?'s':'');
 }
