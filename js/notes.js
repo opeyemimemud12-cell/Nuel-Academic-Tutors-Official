@@ -1,6 +1,6 @@
 // Notes: folders, subfolders, selection mode (long-press), move & bulk download.
 // Loaded AFTER app.js, so these functions replace the old note renderers/uploader.
-var NF={t:{path:'',sel:{},mode:false,folders:[],saved:[]},s:{path:'',sel:{},mode:false,folders:[],saved:[]}};
+var NF={t:{path:'',q:'',sel:{},mode:false,folders:[],saved:[]},s:{path:'',q:'',sel:{},mode:false,folders:[],saved:[]}};
 function nfa(s){return esc(s).replace(/"/g,'&quot;');}
 function nfCmp(a,b){return String(a).localeCompare(String(b),undefined,{sensitivity:'base',numeric:true});}
 function nfBase(p){return p.split('/').pop();}
@@ -14,54 +14,82 @@ function nfAll(saved){
   saved.forEach(add);_notes.forEach(function(n){add(n.folder);});
   return Object.keys(set).sort(nfCmp);
 }
+
+function nfShell(cont){
+  if(!cont._shell){
+    cont.innerHTML='<div class="nf-search-wrap"><span class="nf-search-ico">&#128269;</span><input class="nf-search" type="search" placeholder="Search notes... (any letters or symbols)" autocomplete="off" spellcheck="false"><button class="nf-search-x" type="button" title="Clear search" style="display:none">&#10005;</button></div><div class="nf-body"></div>';
+    cont._shell=1;
+  }
+  return cont.querySelector('.nf-body');
+}
+function nfMatch(s,q){return String(s||'').toLowerCase().indexOf(q.toLowerCase())>=0;}
+function nfHl(text,q){
+  text=String(text);if(!q)return esc(text);
+  var lt=text.toLowerCase(),lq=q.toLowerCase(),out='',i=0,j;
+  while((j=lt.indexOf(lq,i))>=0){out+=esc(text.slice(i,j))+'<mark>'+esc(text.slice(j,j+q.length))+'</mark>';i=j+q.length;}
+  return out+esc(text.slice(i));
+}
+function nfVisible(k){
+  var S=NF[k],q=S.q.trim(),list;
+  if(q)list=_notes.filter(function(n){return nfMatch(n.name,q)||nfMatch(n.folder,q);});
+  else list=_notes.filter(function(n){return (n.folder||'')===S.path;});
+  return list.sort(function(a,b){return nfCmp(a.name,b.name);});
+}
 function nfRender(k){
   var cont=Q(k==='t'?'notes-list-body':'stu-notes-list'),S=NF[k];
-  cont.innerHTML='<div style="padding:12px;text-align:center;color:var(--text3)">Loading...</div>';
+  nfShell(cont).innerHTML='<div style="padding:12px;text-align:center;color:var(--text3)">Loading...</div>';
   Promise.all([loadNotes(),getConfig('note_folders').catch(function(){return null;})]).then(function(r){
     S.saved=Array.isArray(r[1])?r[1]:[];S.folders=nfAll(S.saved);
     if(S.path&&S.folders.indexOf(S.path)<0)S.path='';
     nfDraw(k);
-  }).catch(function(){cont.innerHTML='<div class="empty-state"><div class="empty-title">Error</div></div>';});
+  }).catch(function(){nfShell(cont).innerHTML='<div class="empty-state"><div class="empty-title">Error</div></div>';});
 }
 function nfDraw(k){
-  var S=NF[k],T=k==='t',cont=Q(T?'notes-list-body':'stu-notes-list'),cur=S.path;
-  var subs=S.folders.filter(function(p){return nfParent(p)===cur;}).sort(function(a,b){return nfCmp(nfBase(a),nfBase(b));});
-  var notes=_notes.filter(function(n){return (n.folder||'')===cur;}).sort(function(a,b){return nfCmp(a.name,b.name);});
-  var nSel=Object.keys(S.sel).length,h='';
-  // breadcrumb
-  var crumbs='<span class="nf-crumb" data-go="">&#128193; All Notes</span>',acc='';
-  cur.split('/').filter(Boolean).forEach(function(x){acc=acc?acc+'/'+x:x;crumbs+=' <span style="color:var(--text3)">&rsaquo;</span> <span class="nf-crumb" data-go="'+nfa(acc)+'">'+esc(x)+'</span>';});
+  var S=NF[k],T=k==='t',cont=Q(T?'notes-list-body':'stu-notes-list'),body=nfShell(cont),q=S.q.trim(),cur=S.path;
+  var inp=cont.querySelector('.nf-search'),clr=cont.querySelector('.nf-search-x');
+  if(inp&&inp.value!==S.q)inp.value=S.q;if(clr)clr.style.display=S.q?'block':'none';
+  var subs=q?S.folders.filter(function(p){return nfMatch(nfBase(p),q);}).sort(nfCmp)
+           :S.folders.filter(function(p){return nfParent(p)===cur;}).sort(function(a,b){return nfCmp(nfBase(a),nfBase(b));});
+  var notes=nfVisible(k),nSel=Object.keys(S.sel).length,h='',crumbs;
+  if(q){
+    crumbs='<span>&#128269; '+notes.length+' note'+(notes.length!==1?'s':'')+(subs.length?' &amp; '+subs.length+' folder'+(subs.length!==1?'s':''):'')+' for &ldquo;'+esc(q)+'&rdquo;</span>';
+  }else{
+    crumbs='<span class="nf-crumb" data-go="">&#128193; All Notes</span>';var acc='';
+    cur.split('/').filter(Boolean).forEach(function(x){acc=acc?acc+'/'+x:x;crumbs+=' <span style="color:var(--text3)">&rsaquo;</span> <span class="nf-crumb" data-go="'+nfa(acc)+'">'+esc(x)+'</span>';});
+  }
   h+='<div class="nf-bar"><div class="nf-path">'+crumbs+'</div><div class="nf-actions">';
   if(T)h+='<button class="btn-dl" data-act="newfolder">&#10133; New Folder</button>';
   h+='<button class="btn-dl" data-act="selmode">'+(S.mode?'Done':'&#9745; Select')+'</button></div></div>';
   if(T)h+='<div class="nf-hint">New uploads go into: <strong>'+esc(cur||'All Notes')+'</strong></div>';
   if(S.mode){
-    h+='<div class="nf-selbar"><strong>'+nSel+' selected</strong><button class="btn-dl" data-act="selall">Select all here</button>'
+    h+='<div class="nf-selbar"><strong>'+nSel+' selected</strong><button class="btn-dl" data-act="selall">Select all '+(q?'results':'here')+'</button>'
       +(T?'<button class="btn-dl" data-act="move"'+(nSel?'':' disabled')+'>&#128194; Move</button>':'')
       +'<button class="btn-dl" data-act="dl"'+(nSel?'':' disabled')+'>&#11015; Download</button>'
       +'<button class="btn-dl" data-act="cancel">Cancel</button></div>';
   }else h+='<div class="nf-hint">Tip: press and hold a note to select several.</div>';
-  if(!subs.length&&!notes.length)h+='<div class="empty-state"><div class="empty-icon">&#128193;</div><div class="empty-title">'+(cur?'This folder is empty':'No Notes Yet')+'</div><div class="empty-sub">'+(T?'Upload files above or create a folder':'Nothing here yet')+'</div></div>';
+  if(!subs.length&&!notes.length)h+='<div class="empty-state"><div class="empty-icon">'+(q?'&#128269;':'&#128193;')+'</div><div class="empty-title">'+(q?'No matches':(cur?'This folder is empty':'No Notes Yet'))+'</div><div class="empty-sub">'+(q?'Nothing found for &ldquo;'+esc(q)+'&rdquo;':(T?'Upload files above or create a folder':'Nothing here yet'))+'</div></div>';
   subs.forEach(function(p){
-    var c=_notes.filter(function(n){return nfIn(n,p);}).length;
-    h+='<div class="note-item nf-row nf-folder" data-open="'+nfa(p)+'"><div style="font-size:24px">&#128193;</div><div class="item-info"><div class="item-name">'+esc(nfBase(p))+'</div><div class="item-meta">'+c+' note'+(c!==1?'s':'')+'</div></div><span style="color:var(--text3)">&rsaquo;</span></div>';
+    var c=_notes.filter(function(n){return nfIn(n,p);}).length,par=nfParent(p);
+    h+='<div class="note-item nf-row nf-folder" data-open="'+nfa(p)+'"><div style="font-size:24px">&#128193;</div><div class="item-info"><div class="item-name">'+nfHl(nfBase(p),q)+'</div><div class="item-meta">'+c+' note'+(c!==1?'s':'')+(q&&par?' &middot; in '+esc(par):'')+'</div></div><span style="color:var(--text3)">&rsaquo;</span></div>';
   });
   notes.forEach(function(n){
     var on=!!S.sel[n.id];
     h+='<div class="'+(T?'note-item':'note-card-stu')+' nf-row'+(on?' nf-on':'')+'" data-nrow="'+nfa(n.id)+'">'
       +(S.mode?'<div class="nf-check">'+(on?'&#10003;':'')+'</div>':'')
       +'<div style="font-size:22px;flex-shrink:0">'+fileIcon(n.name)+'</div>'
-      +'<div class="item-info" style="flex:1;min-width:80px"><div class="item-name">'+esc(n.name)+'</div><div class="item-meta">'+fmtSize(n.size)+' &middot; '+esc(n.uploadedBy||'Teacher')+'</div></div>';
+      +'<div class="item-info" style="flex:1;min-width:80px"><div class="item-name">'+nfHl(n.name,q)+'</div><div class="item-meta">'+(q&&n.folder?'&#128193; '+nfHl(n.folder,q)+' &middot; ':'')+fmtSize(n.size)+' &middot; '+esc(n.uploadedBy||'Teacher')+'</div></div>';
     if(!S.mode){h+='<button class="btn-dl" data-noteid="'+nfa(n.id)+'">&#11015; Download</button>';
       if(T)h+='<button class="btn-del" data-delnote="'+nfa(n.id)+'" data-notename="'+nfa(n.name)+'">&#128465;</button>';}
     h+='</div>';
   });
-  cont.innerHTML=h;
+  body.innerHTML=h;
   if(!cont._nf)nfBind(cont);
 }
 function nfBind(cont){
   cont._nf=1;var timer=null;
   function stop(){clearTimeout(timer);}
+  cont.addEventListener('input',function(e){if(!e.target.classList.contains('nf-search'))return;var k=nfK(cont);NF[k].q=e.target.value;nfDraw(k);});
+  cont.addEventListener('keydown',function(e){if(e.key==='Escape'&&e.target.classList.contains('nf-search')){var k=nfK(cont);NF[k].q='';nfDraw(k);}});
   cont.addEventListener('contextmenu',function(e){if(e.target.closest('.nf-row'))e.preventDefault();});
   cont.addEventListener('pointerdown',function(e){
     var row=e.target.closest('[data-nrow]');if(!row||e.target.closest('button'))return;
@@ -73,11 +101,12 @@ function nfBind(cont){
     var k=nfK(cont),S=NF[k],t=e.target;
     if(S.lp){S.lp=false;return;}
     var b;
+    if((b=t.closest('.nf-search-x'))){S.q='';nfDraw(k);var i2=cont.querySelector('.nf-search');if(i2)i2.focus();return;}
     if((b=t.closest('[data-noteid]'))){downloadNote(b.getAttribute('data-noteid'));return;}
     if((b=t.closest('[data-delnote]'))){deleteNoteConfirm(b.getAttribute('data-delnote'),b.getAttribute('data-notename'));return;}
     if((b=t.closest('[data-act]'))){nfAct(k,b.getAttribute('data-act'));return;}
-    if((b=t.closest('[data-go]'))){S.path=b.getAttribute('data-go');nfDraw(k);return;}
-    if((b=t.closest('[data-open]'))){S.path=b.getAttribute('data-open');nfDraw(k);return;}
+    if((b=t.closest('[data-go]'))){S.q='';S.path=b.getAttribute('data-go');nfDraw(k);return;}
+    if((b=t.closest('[data-open]'))){S.q='';S.path=b.getAttribute('data-open');nfDraw(k);return;}
     if((b=t.closest('[data-nrow]'))&&S.mode){var id=b.getAttribute('data-nrow');if(S.sel[id])delete S.sel[id];else S.sel[id]=1;nfDraw(k);}
   });
 }
@@ -86,7 +115,7 @@ function nfAct(k,a){
   if(a==='newfolder')nfNewModal();
   else if(a==='selmode'){S.mode=!S.mode;if(!S.mode)S.sel={};nfDraw(k);}
   else if(a==='cancel'){S.mode=false;S.sel={};nfDraw(k);}
-  else if(a==='selall'){_notes.forEach(function(n){if((n.folder||'')===S.path)S.sel[n.id]=1;});nfDraw(k);}
+  else if(a==='selall'){nfVisible(k).forEach(function(n){S.sel[n.id]=1;});nfDraw(k);}
   else if(a==='move')nfMoveModal();
   else if(a==='dl')nfDlModal(k);
 }
@@ -122,7 +151,7 @@ function nfMoveModal(){
 function nfMoveConfirm(){
   var ids=nfSelIds('t'),dest=Q('nf-dest').value;
   showModal('<div class="modal-title">Confirm Move</div><div class="modal-sub">Move <strong>'+ids.length+'</strong> note'+(ids.length!==1?'s':'')+' to <strong>'+esc(dest?dest.split('/').join(' / '):'All Notes')+'</strong>?</div>'
-    +'<div class="modal-btn-row"><button class="modal-btn" onclick="closeModal()">Cancel</button><button class="modal-btn" style="background:var(--gold);color:var(--navy);" data-dest="'+nfa(dest)+'" id="nf-go-move">Yes, move</button></div>');
+    +'<div class="modal-btn-row"><button class="modal-btn" onclick="closeModal()">Cancel</button><button class="modal-btn" style="background:var(--gold);color:var(--ink);" data-dest="'+nfa(dest)+'" id="nf-go-move">Yes, move</button></div>');
   Q('nf-go-move').addEventListener('click',function(){nfDoMove(dest);});
 }
 function nfDoMove(dest){
@@ -137,7 +166,7 @@ function nfDlModal(k){
   var names=ids.slice(0,5).map(function(id){var n=_notes.find(function(x){return x.id===id;});return '&bull; '+esc(n?n.name:'');}).join('<br>')+(ids.length>5?'<br>&hellip; and '+(ids.length-5)+' more':'');
   showModal('<div class="modal-title">Download Notes</div><div class="modal-sub">Download <strong>'+ids.length+'</strong> note'+(ids.length!==1?'s':'')+(ids.length>1?' as one ZIP file':'')+'?</div>'
     +'<div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:14px;">'+names+'</div>'
-    +'<div class="modal-btn-row"><button class="modal-btn" onclick="closeModal()">Cancel</button><button class="modal-btn" style="background:var(--gold);color:var(--navy);" id="nf-go-dl">Download</button></div>');
+    +'<div class="modal-btn-row"><button class="modal-btn" onclick="closeModal()">Cancel</button><button class="modal-btn" style="background:var(--gold);color:var(--ink);" id="nf-go-dl">Download</button></div>');
   Q('nf-go-dl').addEventListener('click',function(){nfDoDl(k);});
 }
 function nfSave(href,name){var a=document.createElement('a');a.href=href;a.download=name;document.body.appendChild(a);a.click();a.remove();}
