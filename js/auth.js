@@ -29,7 +29,7 @@ function doLogin(){
     getConfig('access_code').then(function(code){if(code)showAccessGate();else enterStudentDash();});
   }).catch(function(e){loading(false);err.textContent='Error: '+e.message;});
 }
-function logout(){currentRole=null;currentUser=null;loginRole=null;clearExamTimer();examSubmitted=false;reviewUnlocked=false;showScreen('landing');}
+function logout(){try{stopEndExamsListener();stopSessionTracking();}catch(e){}currentRole=null;currentUser=null;loginRole=null;clearExamTimer();examSubmitted=false;reviewUnlocked=false;showScreen('landing');}
 
 // ACCESS GATE
 function showAccessGate(){Q('gate-user-name').textContent=currentUser.name;Q('gate-code-input').value='';Q('gate-code-error').textContent='';showScreen('access-gate');setTimeout(function(){if(Q('gate-code-input'))Q('gate-code-input').focus();},100);}
