@@ -18,7 +18,7 @@ function connectFirebase(){
   try{
     initFirebaseApp();
     localStorage.setItem('nat_fb_connected','1');
-    toast('Connected! Loading...');
+    toast('Classroom powered up! Loading...');
     setTimeout(function(){showScreen('role-select');},800);
   }catch(e){if(errEl)errEl.textContent='Connection failed: '+e.message;}
 }
