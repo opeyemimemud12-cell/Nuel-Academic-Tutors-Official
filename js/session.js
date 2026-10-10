@@ -46,7 +46,7 @@
     }
     loadUsers().then(function(){
       var u=_users.find(function(x){return x.id===s.id&&x.role===s.role;});
-      if(!u||hash(u.passHash||u.password||'')!==s.sig){clear();done();return;}   // account removed or password changed
+      if(!u||u.suspended||hash(u.passHash||u.password||'')!==s.sig){clear();done();return;}   // account removed or password changed
       currentRole=s.role;currentUser=u;
       if(s.role==='teacher'){enterTeacherDash();gotoTab(teacherTab,'ttb-',tab);done();return;}
       return getConfig('access_code').then(function(code){
