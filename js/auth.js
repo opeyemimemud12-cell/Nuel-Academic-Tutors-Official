@@ -40,15 +40,19 @@ function userLogin(role,email,pass,err){
   return loadUsers().then(function(){
     var user=_users.find(function(u){return u.role===role&&(u.email===email||u.username===email);});
     if(!user||!verifyPassword(user,pass))return failLogin(role,email,err,'Incorrect email or password.');
+    if(user.suspended){loading(false);logAudit('login_blocked','Suspended '+role+' tried to sign in: '+email,email);err.textContent='This account has been suspended. Please contact the administrator.';return;}
     var legacy=!user.passHash;
     return (legacy?upgradePassword(user,pass):Promise.resolve(user)).then(function(u){
       user=u;clearFails(role,email);
       currentRole=role;currentUser=user;
       if(role==='teacher'){loading(false);logAudit('login','teacher login',user.email);enterTeacherDash();return;}
+      return getConfig('maintenance').then(function(m){
+      if(m&&m.on){currentRole=null;currentUser=null;loading(false);err.textContent=m.message||'The site is under maintenance. Please check back soon.';return;}
       return checkOtherDevice(user.id).then(function(other){
         if(other){currentRole=null;currentUser=null;loading(false);err.textContent='This account is currently writing an exam on another device. Try again when it is finished.';return;}
         loading(false);logAudit('login','student login',user.email);
         return getConfig('access_code').then(function(code){if(code)showAccessGate();else enterStudentDash();});
+      });
       });
     });
   });
