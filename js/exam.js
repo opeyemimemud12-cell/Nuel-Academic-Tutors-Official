@@ -1,51 +1,141 @@
 // PROCTOR
-var proctor={active:false,session:null,_iw:null,
-  start:function(examName,candidate){this.active=true;this.session={candidate:candidate||'Unknown',examName:examName,startTime:new Date().toISOString(),tabSwitches:0,visibilityChanges:[],clicks:[],keystrokes:0,idlePeriods:[],lastActivity:Date.now()};this._bind();var self=this;this._iw=setInterval(function(){if(!self.active)return;var idle=Date.now()-self.session.lastActivity;if(idle>15000)self.session.idlePeriods.push({idleMs:idle,time:new Date().toISOString()});},5000);},
-  stop:function(reason){if(!this.active)return;this.active=false;this._unbind();clearInterval(this._iw);this.session.endTime=new Date().toISOString();this.session.endReason=reason;},
-  _onVis:function(){if(!proctor.active)return;var h=document.hidden;proctor.session.visibilityChanges.push({time:new Date().toISOString(),hidden:h});if(h){proctor.session.tabSwitches++;if(!examSubmitted){proctor.stop('auto-submit');submitExam(true);}}},
+var MAX_FREE_SWITCHES=1;   // tab switches allowed (with a warning) before the exam is auto-submitted
+var MAX_FREE_FS_EXITS=1;   // fullscreen exits allowed (with a warning) before auto-submit
+function shuffleArr(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function enterExamFullscreen(){var el=document.documentElement;var f=el.requestFullscreen||el.webkitRequestFullscreen;if(f){try{var p=f.call(el);if(p&&p.catch)p.catch(function(){});}catch(e){}}}
+function exitExamFullscreen(){try{if(document.fullscreenElement||document.webkitFullscreenElement){(document.exitFullscreen||document.webkitExitFullscreen).call(document);}}catch(e){}}
+function showExamWarning(html,withFsBtn){
+  showModal('<div style="text-align:center;margin-bottom:10px;font-size:34px">&#9888;&#65039;</div><div class="modal-title" style="text-align:center">Warning</div><div class="modal-sub" style="text-align:center;margin-bottom:14px">'+html+'</div><div class="modal-btn-row"><button class="modal-btn primary" onclick="'+(withFsBtn?'enterExamFullscreen();':'')+'closeModal()">'+(withFsBtn?'Return to fullscreen':'OK, continue')+'</button></div>');
+}
+var proctor={active:false,session:null,_iw:null,_requireFs:false,
+  start:function(examName,candidate,opts){this.active=true;this._requireFs=!!(opts&&opts.requireFs);this.session={candidate:candidate||'Unknown',examName:examName,startTime:new Date().toISOString(),tabSwitches:0,visibilityChanges:[],clicks:[],keystrokes:0,idlePeriods:[],lastActivity:Date.now(),blockedActions:0,fsExits:0,warnings:0};this._bind();document.body.classList.add('exam-locked');var self=this;this._iw=setInterval(function(){if(!self.active)return;var idle=Date.now()-self.session.lastActivity;if(idle>15000)self.session.idlePeriods.push({idleMs:idle,time:new Date().toISOString()});},5000);},
+  stop:function(reason){if(!this.active)return;this.active=false;this._unbind();document.body.classList.remove('exam-locked');exitExamFullscreen();clearInterval(this._iw);this.session.endTime=new Date().toISOString();this.session.endReason=reason;},
+  _onVis:function(){
+    if(!proctor.active)return;
+    var h=document.hidden;proctor.session.visibilityChanges.push({time:new Date().toISOString(),hidden:h});
+    if(h){
+      proctor.session.tabSwitches++;
+      if(proctor.session.tabSwitches>MAX_FREE_SWITCHES&&!examSubmitted){proctor.stop('auto-submit');submitExam(true);}
+    }else if(!examSubmitted&&proctor.session.tabSwitches>0&&proctor.session.tabSwitches<=MAX_FREE_SWITCHES){
+      proctor.session.warnings++;
+      showExamWarning('You left the exam tab. This is your warning &mdash; leaving again will <b>auto-submit</b> your exam.');
+    }
+  },
   _onClick:function(e){if(!proctor.active)return;proctor.session.lastActivity=Date.now();proctor.session.clicks.push({x:e.clientX,y:e.clientY});},
-  _onKey:function(){if(!proctor.active)return;proctor.session.lastActivity=Date.now();proctor.session.keystrokes++;},
+  _onKey:function(e){
+    if(!proctor.active)return;proctor.session.lastActivity=Date.now();proctor.session.keystrokes++;
+    var k=(e.key||'').toLowerCase(),mod=e.ctrlKey||e.metaKey;
+    if((mod&&['c','v','x','a','p','s','u'].indexOf(k)>-1)||k==='f12'||k==='printscreen'||(mod&&e.shiftKey&&['i','j','c'].indexOf(k)>-1)){e.preventDefault();proctor.session.blockedActions++;}
+  },
   _onMove:function(){if(!proctor.active)return;proctor.session.lastActivity=Date.now();},
-  _bind:function(){document.addEventListener('visibilitychange',proctor._onVis);document.addEventListener('click',proctor._onClick);document.addEventListener('keydown',proctor._onKey);document.addEventListener('mousemove',proctor._onMove);},
-  _unbind:function(){document.removeEventListener('visibilitychange',proctor._onVis);document.removeEventListener('click',proctor._onClick);document.removeEventListener('keydown',proctor._onKey);document.removeEventListener('mousemove',proctor._onMove);}
+  _onBlock:function(e){if(!proctor.active)return;e.preventDefault();proctor.session.blockedActions++;},
+  _onSel:function(e){if(!proctor.active)return;e.preventDefault();},
+  _onFs:function(){
+    if(!proctor.active||!proctor._requireFs)return;
+    if(document.fullscreenElement||document.webkitFullscreenElement)return;
+    proctor.session.fsExits++;
+    if(proctor.session.fsExits>MAX_FREE_FS_EXITS&&!examSubmitted){proctor.stop('auto-submit');submitExam(true);}
+    else{proctor.session.warnings++;showExamWarning('You left fullscreen. This is your warning &mdash; leaving fullscreen again will <b>auto-submit</b> your exam.',true);}
+  },
+  _evs:['copy','cut','paste','contextmenu','dragstart'],
+  _bind:function(){
+    document.addEventListener('visibilitychange',proctor._onVis);document.addEventListener('click',proctor._onClick);document.addEventListener('keydown',proctor._onKey);document.addEventListener('mousemove',proctor._onMove);
+    proctor._evs.forEach(function(ev){document.addEventListener(ev,proctor._onBlock);});
+    document.addEventListener('selectstart',proctor._onSel);
+    document.addEventListener('fullscreenchange',proctor._onFs);document.addEventListener('webkitfullscreenchange',proctor._onFs);
+  },
+  _unbind:function(){
+    document.removeEventListener('visibilitychange',proctor._onVis);document.removeEventListener('click',proctor._onClick);document.removeEventListener('keydown',proctor._onKey);document.removeEventListener('mousemove',proctor._onMove);
+    proctor._evs.forEach(function(ev){document.removeEventListener(ev,proctor._onBlock);});
+    document.removeEventListener('selectstart',proctor._onSel);
+    document.removeEventListener('fullscreenchange',proctor._onFs);document.removeEventListener('webkitfullscreenchange',proctor._onFs);
+  }
 };
+// Shuffling: the student sees a shuffled copy; answers are converted back to the original question/option order on submit
+var _examMap=null;
+function buildExamView(ex){
+  var L=['A','B','C','D'],n=ex.questions.length,shuffle=ex.shuffle!==false,qOrder=[],optMaps=[],i;
+  for(i=0;i<n;i++)qOrder.push(i);
+  if(shuffle)shuffleArr(qOrder);
+  var vq=qOrder.map(function(oi){
+    var q=ex.questions[oi],m=[0,1,2,3];
+    if(shuffle)shuffleArr(m);
+    optMaps.push(m);
+    return Object.assign({},q,{opts:m.map(function(k){return q.opts[k];})});
+  });
+  _examMap={qOrder:qOrder,optMaps:optMaps};
+  return Object.assign({},ex,{questions:vq});
+}
+function toOriginalAnswers(total){
+  var L=['A','B','C','D'];
+  if(!_examMap||_examMap.qOrder.length!==total||examAnswers.length!==total)return examAnswers.slice();
+  var out=Array(total).fill(null);
+  for(var v=0;v<total;v++){var a=examAnswers[v];if(a===null||a===undefined)continue;out[_examMap.qOrder[v]]=L[_examMap.optMaps[v][L.indexOf(a)]];}
+  return out;
+}
+function slimSession(s){
+  var o=Object.assign({},s);o.clickCount=(s.clicks||[]).length;delete o.clicks;
+  var m=0;(s.idlePeriods||[]).forEach(function(p){if(p.idleMs>m)m=p.idleMs;});
+  o.maxIdleMs=m;o.idleCount=(s.idlePeriods||[]).length;delete o.idlePeriods;return o;
+}
 
 // EXAM FLOW
 function startExamFlow(id){
   loadExams().then(function(){
     var ex=_exams.find(function(e){return e.id===id;});if(!ex)return;
+    var win=examWindowState(ex);
+    if(win.state!=='open'){toast(win.label,'error');return;}
+    var rules=['Leaving this tab gives <b>one warning</b>, then the exam is auto-submitted','Copy, paste and right-click are disabled','Clicks &amp; keystrokes are logged','No retake once submitted'];
+    if(ex.requireFullscreen)rules.splice(1,0,'This exam runs in <b>fullscreen</b> &mdash; leaving it twice auto-submits');
+    var codeHtml=ex.startCode?'<div class="field" style="margin-bottom:5px;margin-top:10px"><label>Exam Code</label><input class="modal-input" type="text" id="estartcode" placeholder="Code given by your teacher" autocomplete="off"></div>':'';
     showModal('<div style="text-align:center;margin-bottom:14px;font-size:34px">&#128737;&#65039;</div>'
       +'<div class="modal-title" style="text-align:center">Anti-Cheat Notice</div>'
       +'<div class="modal-sub" style="text-align:center;margin-bottom:14px">This exam is monitored.</div>'
-      +'<div style="background:var(--cream);border-radius:var(--radius-sm);padding:12px 14px;font-size:11px;line-height:2;margin-bottom:14px;border-left:3px solid var(--danger);">&#8250; Switching tabs will auto-submit<br>&#8250; Clicks &amp; keystrokes are logged<br>&#8250; No retake once submitted</div>'
+      +'<div style="background:var(--cream);border-radius:var(--radius-sm);padding:12px 14px;font-size:11px;line-height:2;margin-bottom:14px;border-left:3px solid var(--danger);">&#8250; '+rules.join('<br>&#8250; ')+'</div>'
       +'<div class="field" style="margin-bottom:5px"><label>Your Full Name</label>'
       +'<input class="modal-input" type="text" id="ecandname" placeholder="e.g. Chinwe Obi" autocomplete="off"></div>'
+      +codeHtml
       +'<div class="modal-error" id="ecanderr"></div>'
       +'<div class="modal-btn-row"><button class="modal-btn" onclick="closeModal()">Cancel</button>'
       +'<button class="modal-btn primary" id="exam-confirm-btn">I Understand &#8212; Start</button></div>');
     setTimeout(function(){
       if(Q('ecandname'))Q('ecandname').focus();
       var btn=Q('exam-confirm-btn');if(btn)btn.addEventListener('click',function(){beginExam(id);});
-      if(Q('ecandname'))Q('ecandname').addEventListener('keydown',function(e){if(e.key==='Enter')beginExam(id);});
+      ['ecandname','estartcode'].forEach(function(i){if(Q(i))Q(i).addEventListener('keydown',function(e){if(e.key==='Enter')beginExam(id);});});
     },50);
   });
 }
 function beginExam(id){
   var nameInp=Q('ecandname');var name=nameInp?nameInp.value.trim():'';
-  if(!name){if(nameInp){nameInp.classList.remove('shake');void nameInp.offsetWidth;nameInp.classList.add('shake');}if(Q('ecanderr'))Q('ecanderr').textContent='Please enter your name.';return;}
-  closeModal();
+  var codeInp=Q('estartcode');var code=codeInp?codeInp.value.trim():'';
+  var errEl=Q('ecanderr');
+  function fail(msg,el){if(el){el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake');}if(errEl)errEl.textContent=msg;}
+  if(!name){fail('Please enter your name.',nameInp);return;}
+  var pre=_exams.find(function(e){return e.id===id;});
+  var wantsFs=!!(pre&&pre.requireFullscreen);
+  if(wantsFs)enterExamFullscreen();   // has to happen inside the click that starts the exam
   loadExams().then(function(){
-    var ex=_exams.find(function(e){return e.id===id;});if(!ex)return;
-    currentExamId=id;_currentExamCache=ex;examAnswers=Array(ex.questions.length).fill(null);examQIdx=0;examSubmitted=false;reviewUnlocked=false;
-    if(Q('taking-exam-name'))Q('taking-exam-name').textContent=ex.name;
-    if(Q('exam-q-total'))Q('exam-q-total').textContent=ex.questions.length;
-    clearExamTimer();
-    if(ex.timer>0){startExamTimer(ex.timer*60);}
-    else if(Q('exam-timer-el'))Q('exam-timer-el').style.display='none';
-    showScreen('take-exam-screen');renderExamQ();
-    proctor.start(ex.name,name);
-    startSessionTracking(ex,name);
-  });
+    var ex=_exams.find(function(e){return e.id===id;});if(!ex){exitExamFullscreen();return;}
+    var win=examWindowState(ex),al=ex.allowedStudents,prog=(ex.studentProgress||{})[currentUser.id],problem=null,problemEl=null;
+    if(win.state!=='open')problem=win.label;
+    else if(al&&al.length&&al.indexOf(currentUser.id)<0)problem='You are not assigned to this exam.';
+    else if(prog&&prog.completed)problem='You have already taken this exam.';
+    else if(ex.startCode&&code!==ex.startCode){problem='Incorrect exam code.';problemEl=codeInp;}
+    if(problem){fail(problem,problemEl);exitExamFullscreen();return;}
+    return checkOtherDevice(currentUser.id).then(function(other){
+      if(other){fail('You are already writing an exam on another device or tab. Close it first, or wait about a minute.');exitExamFullscreen();return;}
+      closeModal();
+      currentExamId=id;_currentExamCache=buildExamView(ex);examAnswers=Array(ex.questions.length).fill(null);examQIdx=0;examSubmitted=false;reviewUnlocked=false;
+      if(Q('taking-exam-name'))Q('taking-exam-name').textContent=ex.name;
+      if(Q('exam-q-total'))Q('exam-q-total').textContent=ex.questions.length;
+      clearExamTimer();
+      if(ex.timer>0){startExamTimer(ex.timer*60);}
+      else if(Q('exam-timer-el'))Q('exam-timer-el').style.display='none';
+      showScreen('take-exam-screen');renderExamQ();
+      proctor.start(ex.name,name,{requireFs:wantsFs});
+      startSessionTracking(ex,name);
+    });
+  }).catch(function(e){fail('Error: '+e.message);exitExamFullscreen();});
 }
 var examEndsAt=0;
 var examEls=null;
@@ -166,21 +256,23 @@ function submitExam(auto){
   loadExams().then(function(){
     var ex=_exams.find(function(e){return e.id===currentExamId;});if(!ex)return;
     var total=ex.questions.length,correct=0;
-    ex.questions.forEach(function(q,i){if(examAnswers[i]===q.correct)correct++;});
+    var finalAnswers=toOriginalAnswers(total);
+    ex.questions.forEach(function(q,i){if(finalAnswers[i]===q.correct)correct++;});
     var score=Math.round((correct/total)*ex.maxScore),passed=score>=ex.passScore,pct=Math.round((correct/total)*100);
     loading(true,'Saving results...');
     var updProg=Object.assign({},ex.studentProgress);
-    updProg[currentUser.id]={completed:true,lastAnswers:examAnswers.slice(),correct:correct,score:score,passed:passed,maxScore:ex.maxScore,submittedAt:new Date().toISOString()};
+    updProg[currentUser.id]={completed:true,lastAnswers:finalAnswers.slice(),correct:correct,score:score,passed:passed,maxScore:ex.maxScore,submittedAt:new Date().toISOString()};
     saveExamDoc(Object.assign({},ex,{studentProgress:updProg})).then(function(){
       if(proctor.session){
         return loadUsers().then(function(){
           var uDoc=_users.find(function(u){return u.id===currentUser.id;});
-          if(uDoc){var sess=(uDoc.sessions||[]).concat([Object.assign({},proctor.session,{examName:ex.name,score:score,maxScore:ex.maxScore,passed:passed,submittedAt:new Date().toISOString()})]);return saveUser(Object.assign({},uDoc,{sessions:sess}));}
+          if(uDoc){var sess=(uDoc.sessions||[]).concat([Object.assign({},slimSession(proctor.session),{questionCount:total,examName:ex.name,score:score,maxScore:ex.maxScore,passed:passed,submittedAt:new Date().toISOString()})]);return saveUser(Object.assign({},uDoc,{sessions:sess}));}
         });
       }
     }).then(function(){return getConfig('correction_visibility');}).then(function(vis){
       var showCorr=(vis===true);
       stopSessionTracking();
+      logAudit('exam_submitted',currentUser.name+' submitted '+ex.name+' ('+score+'/'+ex.maxScore+')'+(window.__endedByAdmin?' - ended by admin':(auto?' - auto-submitted':'')),currentUser.email);
       proctor.stop(auto?'auto':'manual');
       var deg=Math.round((pct/100)*360),color=passed?'#c9a84c':'#ef4444';
       var v=Q('rh-verdict');if(v){v.textContent=passed?'Passed! &#127881;':'Not Passed';v.className='rh-verdict '+(passed?'pass':'fail');}
@@ -191,7 +283,7 @@ function submitExam(auto){
       if(Q('rh-correct'))Q('rh-correct').textContent=correct;
       if(Q('rh-wrong'))Q('rh-wrong').textContent=total-correct;
       if(Q('rh-pct'))Q('rh-pct').textContent=pct+'%';
-      var rl=Q('review-list');if(rl){rl.innerHTML=buildReviewHTML(ex,examAnswers);rl.classList.remove('open');}
+      var rl=Q('review-list');if(rl){rl.innerHTML=buildReviewHTML(ex,finalAnswers);rl.classList.remove('open');}
       if(Q('review-locked-notice'))Q('review-locked-notice').style.display=showCorr?'none':'flex';
       if(Q('review-toggle-btn'))Q('review-toggle-btn').style.display=showCorr?'flex':'none';
       if(!showCorr&&rl)rl.innerHTML='';
