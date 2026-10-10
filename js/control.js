@@ -22,7 +22,7 @@ function toggleCorrectionVisibility(){
   loading(true,'Updating...');
   getConfig('correction_visibility').then(function(v){
     var next=!(v===true);
-    return setConfig('correction_visibility',next).then(function(){paintCorrectionStatus(next);toast('Corrections turned '+(next?'ON':'OFF')+'.');});
+    return setConfig('correction_visibility',next).then(function(){paintCorrectionStatus(next);logAudit('correction_visibility','Corrections turned '+(next?'ON':'OFF'));toast('Corrections turned '+(next?'ON':'OFF')+'.');});
   }).catch(function(e){toast('Error: '+e.message,'error');}).then(function(){loading(false);});
 }
 
@@ -50,7 +50,7 @@ function startSessionTracking(ex,name){
   window.__endedByAdmin=false;
   var ref=db.collection('active_sessions').doc(_sessUid);
   ref.set({studentId:_sessUid,studentName:currentUser.name||name,candidate:name,examId:ex.id,examName:ex.name,
-    startedAt:new Date().toISOString(),lastSeen:Date.now(),endRequested:false},{merge:true}).catch(function(){});
+    startedAt:new Date().toISOString(),lastSeen:Date.now(),endRequested:false,deviceId:getDeviceId()},{merge:true}).catch(function(){});
   _sessBeat=setInterval(function(){ref.set({lastSeen:Date.now()},{merge:true}).catch(function(){});},15000);
   _sessUnsub=ref.onSnapshot(function(d){
     if(!d.exists)return;
@@ -114,7 +114,56 @@ function endExamsConfirm(stuId){
 function doEndExams(ids){
   closeModal();loading(true,'Ending exams...');
   Promise.all(ids.map(function(id){return db.collection('active_sessions').doc(String(id)).set({endRequested:true,endedAt:new Date().toISOString()},{merge:true});}))
-    .then(function(){toast('End signal sent to '+ids.length+' student'+(ids.length!==1?'s':'')+'.');})
+    
+    .then(function(){logAudit('end_exams','Ended '+ids.length+' active exam(s)');toast('End signal sent to '+ids.length+' student'+(ids.length!==1?'s':'')+'.');})
     .catch(function(e){toast('Error: '+e.message,'error');})
     .then(function(){loading(false);});
+}
+
+// ───────── Per-exam settings helpers (schedule, allowed students, start code, shuffle, fullscreen) ─────────
+function examWindowState(ex){
+  var now=Date.now(),o=ex.opensAt?new Date(ex.opensAt).getTime():0,cl=ex.closesAt?new Date(ex.closesAt).getTime():0;
+  if(o&&now<o)return{state:'upcoming',label:'Opens '+new Date(o).toLocaleString()};
+  if(cl&&now>cl)return{state:'closed',label:'Closed '+new Date(cl).toLocaleString()};
+  return{state:'open',label:''};
+}
+function readDT(id){var el=Q(id);return el&&el.value?new Date(el.value).toISOString():'';}
+function writeDT(id,iso){
+  var el=Q(id);if(!el)return;
+  if(!iso){el.value='';return;}
+  var d=new Date(iso),p=function(n){return String(n).padStart(2,'0');};
+  el.value=d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes());
+}
+window._allowedPending=null;
+function renderAllowedStudents(selected){
+  var box=Q('ex-allowed-list');if(!box)return;
+  window._allowedPending=selected||[];
+  box.innerHTML='<span style="color:var(--text3)">Loading students...</span>';
+  loadUsers().then(function(){
+    var stu=_users.filter(function(u){return u.role==='student';});
+    if(!stu.length){box.innerHTML='<span style="color:var(--text3)">No students yet.</span>';window._allowedPending=null;return;}
+    box.innerHTML=stu.map(function(u){
+      return '<label style="display:flex;align-items:center;gap:8px;padding:3px 0;cursor:pointer;"><input type="checkbox" class="ex-allow-cb" value="'+esc(u.id)+'"'+(window._allowedPending.indexOf(u.id)>-1?' checked':'')+'> '+esc(u.name)+' <span style="color:var(--text3);font-size:11px;">'+esc(u.email)+'</span></label>';
+    }).join('');
+    window._allowedPending=null;
+  }).catch(function(){box.innerHTML='<span style="color:var(--danger)">Could not load students.</span>';});
+}
+function collectAllowed(){
+  var boxes=document.querySelectorAll('.ex-allow-cb');
+  if(!boxes.length&&window._allowedPending)return window._allowedPending.slice();
+  var out=[];boxes.forEach(function(b){if(b.checked)out.push(b.value);});return out;
+}
+function resetExamExtras(){
+  writeDT('ex-opens','');writeDT('ex-closes','');
+  if(Q('ex-startcode'))Q('ex-startcode').value='';
+  if(Q('ex-shuffle'))Q('ex-shuffle').checked=true;
+  if(Q('ex-fullscreen'))Q('ex-fullscreen').checked=false;
+  renderAllowedStudents([]);
+}
+function fillExamExtras(ex){
+  writeDT('ex-opens',ex.opensAt);writeDT('ex-closes',ex.closesAt);
+  if(Q('ex-startcode'))Q('ex-startcode').value=ex.startCode||'';
+  if(Q('ex-shuffle'))Q('ex-shuffle').checked=ex.shuffle!==false;
+  if(Q('ex-fullscreen'))Q('ex-fullscreen').checked=!!ex.requireFullscreen;
+  renderAllowedStudents(ex.allowedStudents||[]);
 }
