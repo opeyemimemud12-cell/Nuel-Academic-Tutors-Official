@@ -87,6 +87,8 @@ function startExamFlow(id){
     if(win.state!=='open'){toast(win.label,'error');return;}
     var rules=['Leaving this tab gives <b>one warning</b>, then the exam is auto-submitted','Copy, paste and right-click are disabled','Clicks &amp; keystrokes are logged','No retake once submitted'];
     if(ex.requireFullscreen)rules.splice(1,0,'This exam runs in <b>fullscreen</b> &mdash; leaving it twice auto-submits');
+    var _x=(ex.extraTime&&ex.extraTime[currentUser.id])||0;
+    if(ex.timer>0&&_x>0)rules.push('You have <b>+'+_x+' min extra time</b> (total '+(ex.timer+_x)+' min)');
     var codeHtml=ex.startCode?'<div class="field" style="margin-bottom:5px;margin-top:10px"><label>Exam Code</label><input class="modal-input" type="text" id="estartcode" placeholder="Code given by your teacher" autocomplete="off"></div>':'';
     showModal('<div style="text-align:center;margin-bottom:14px;font-size:34px">&#128737;&#65039;</div>'
       +'<div class="modal-title" style="text-align:center">Anti-Cheat Notice</div>'
@@ -129,7 +131,8 @@ function beginExam(id){
       if(Q('taking-exam-name'))Q('taking-exam-name').textContent=ex.name;
       if(Q('exam-q-total'))Q('exam-q-total').textContent=ex.questions.length;
       clearExamTimer();
-      if(ex.timer>0){startExamTimer(ex.timer*60);}
+      var _extra=(ex.extraTime&&ex.extraTime[currentUser.id])||0;
+      if(ex.timer>0){startExamTimer((ex.timer+_extra)*60);}
       else if(Q('exam-timer-el'))Q('exam-timer-el').style.display='none';
       showScreen('take-exam-screen');renderExamQ();
       proctor.start(ex.name,name,{requireFs:wantsFs});
