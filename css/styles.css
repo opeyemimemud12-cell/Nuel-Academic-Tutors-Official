@@ -452,3 +452,19 @@ html.restoring body{background:#0a1628;}
 
 /* exam lock-down: no text selection while an exam is running */
 body.exam-locked,body.exam-locked *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+
+/* announcement banner */
+.announce-bar{position:fixed;left:0;right:0;bottom:0;z-index:850;display:flex;align-items:center;gap:10px;padding:10px 14px;font-size:13px;font-weight:600;box-shadow:0 -4px 16px rgba(0,0,0,0.18);}
+.announce-bar.info{background:var(--navy,#0a1628);color:#fff;border-top:3px solid var(--gold,#d4a017);}
+.announce-bar.warn{background:#b45309;color:#fff;border-top:3px solid #fbbf24;}
+.announce-bar .ann-tx{flex:1;min-width:0;line-height:1.4;}
+.announce-bar .ann-x{background:none;border:none;color:inherit;font-size:22px;line-height:1;cursor:pointer;opacity:0.75;padding:0 4px;}
+body.has-announce{padding-bottom:52px;}
+/* admin overview */
+.ov-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;}
+.ov-card{background:var(--white);border:1px solid var(--border2);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 14px;}
+.ov-val{font-size:28px;font-weight:800;line-height:1.1;}
+.ov-lbl{font-size:12px;font-weight:700;color:var(--text2);margin-top:6px;}
+.ov-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+.ov-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
+.ov-chip{background:var(--cream);border:1px solid var(--border2);border-radius:20px;padding:5px 12px;font-size:11px;color:var(--text2);}
