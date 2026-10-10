@@ -5,8 +5,7 @@
 
 // ───────── Correction visibility (admin) ─────────
 function paintCorrectionStatus(on){
-  var line=Q('correction-status-line');
-  if(line)line.innerHTML='Correction visibility for students: <strong style="color:'+(on?'var(--success)':'var(--danger)')+'">'+(on?'ON':'OFF')+'</strong>';
+  window._corrOn=on;if(typeof paintStatusLine==='function')paintStatusLine();
   var st=Q('correction-tab-status');
   if(st){
     st.innerHTML=on
@@ -158,12 +157,12 @@ function resetExamExtras(){
   if(Q('ex-startcode'))Q('ex-startcode').value='';
   if(Q('ex-shuffle'))Q('ex-shuffle').checked=true;
   if(Q('ex-fullscreen'))Q('ex-fullscreen').checked=false;
-  renderAllowedStudents([]);
+  renderAllowedStudents([]);renderExtraTime({});
 }
 function fillExamExtras(ex){
   writeDT('ex-opens',ex.opensAt);writeDT('ex-closes',ex.closesAt);
   if(Q('ex-startcode'))Q('ex-startcode').value=ex.startCode||'';
   if(Q('ex-shuffle'))Q('ex-shuffle').checked=ex.shuffle!==false;
   if(Q('ex-fullscreen'))Q('ex-fullscreen').checked=!!ex.requireFullscreen;
-  renderAllowedStudents(ex.allowedStudents||[]);
+  renderAllowedStudents(ex.allowedStudents||[]);renderExtraTime(ex.extraTime||{});
 }
