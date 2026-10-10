@@ -12,8 +12,8 @@
   function save(){
     if(!currentUser||!currentRole)return;
     var old=read()||{},sig='';
-    if(currentRole==='admin'){var a=ADMINS.find(function(x){return x.email===currentUser.email;});sig=a?hash(a.pass):'';}
-    else sig=hash(currentUser.password||'');
+    if(currentRole==='admin'){var a=ADMINS.find(function(x){return x.email===currentUser.email;});sig=a?hash(a.hash):'';}
+    else sig=hash(currentUser.passHash||currentUser.password||'');
     var same=old.role===currentRole&&old.id===(currentUser.id||'')&&old.email===(currentUser.email||'');
     write({role:currentRole,id:currentUser.id||'',email:currentUser.email||'',sig:sig,tab:same?old.tab||'':'',gate:same?old.gate||'':''});
     if(currentRole==='student'){
@@ -39,14 +39,14 @@
     if(typeof db==='undefined'||!db){done();return;}   // offline / not connected: keep the session, show normal screen
     var tab=s.tab;
     if(s.role==='admin'){
-      var a=ADMINS.find(function(x){return x.email===s.email&&hash(x.pass)===s.sig;});
+      var a=ADMINS.find(function(x){return x.email===s.email&&hash(x.hash)===s.sig;});
       if(!a){clear();done();return;}
       currentRole='admin';currentUser={role:'admin',name:a.name,email:a.email};
       enterAdminDash();gotoTab(adminTab,'atb-',tab);done();return;
     }
     loadUsers().then(function(){
       var u=_users.find(function(x){return x.id===s.id&&x.role===s.role;});
-      if(!u||hash(u.password)!==s.sig){clear();done();return;}   // account removed or password changed
+      if(!u||hash(u.passHash||u.password||'')!==s.sig){clear();done();return;}   // account removed or password changed
       currentRole=s.role;currentUser=u;
       if(s.role==='teacher'){enterTeacherDash();gotoTab(teacherTab,'ttb-',tab);done();return;}
       return getConfig('access_code').then(function(code){
