@@ -1,10 +1,12 @@
 // ADMIN
-function enterAdminDash(){try{refreshCorrectionStatus();}catch(e){}Q('admin-uname').textContent=currentUser.email;Q('admin-greeting').textContent=currentUser.name;adminTab('add-user');showScreen('admin-dash');}
+function enterAdminDash(){try{refreshCorrectionStatus();}catch(e){}Q('admin-uname').textContent=currentUser.email;Q('admin-greeting').textContent=currentUser.name;adminTab('overview');showScreen('admin-dash');}
 function adminTab(tab){
   document.querySelectorAll('[id^="atb-"]').forEach(function(b){b.classList.remove('active');});
   document.querySelectorAll('[id^="admin-panel-"]').forEach(function(p){p.classList.remove('active');});
   if(Q('atb-'+tab))Q('atb-'+tab).classList.add('active');
   if(Q('admin-panel-'+tab))Q('admin-panel-'+tab).classList.add('active');
+  if(tab==='overview')renderOverviewTab();else stopOverview();
+  if(tab==='site')renderSiteTab();
   if(tab==='user-list')renderAdminUserList();
   if(tab==='reset-exams')renderAdminResetExams();
   if(tab==='session-log')renderAdminSessionLog();
@@ -38,8 +40,9 @@ function renderAdminUserList(){
       return '<div class="uli">'
         +'<div class="uli-av '+u.role+'">'+esc(u.name||'?').charAt(0).toUpperCase()+'</div>'
         +'<div class="uli-info"><div class="uli-name">'+esc(u.name)+'</div>'
-        +'<div class="uli-meta">'+esc(u.email)+'&nbsp;&middot;&nbsp;<span style="color:'+rc+'">'+u.role+'</span></div></div>'
+        +'<div class="uli-meta">'+esc(u.email)+'&nbsp;&middot;&nbsp;<span style="color:'+rc+'">'+u.role+'</span>'+(u.suspended?'&nbsp;&middot;&nbsp;<span style="color:var(--danger);font-weight:700">Suspended</span>':'')+'</div></div>'
         +'<button class="uli-cred-btn" data-cred="cred'+i+'">&#128273; Credentials</button>'
+        +'<button class="uli-cred-btn" data-suspend="'+u.id+'" data-sname="'+esc(u.name)+'" data-susp="'+(u.suspended?'1':'0')+'">'+(u.suspended?'&#9654; Activate':'&#9208; Suspend')+'</button>'
         +'<button class="uli-del" data-uid="'+u.id+'" data-uname="'+esc(u.name)+'">&#128465;</button>'
         +'</div>'
         +'<div class="cred-panel" id="cred'+i+'">'
@@ -56,6 +59,7 @@ function renderAdminUserList(){
       if(cb)toggleEl(cb.getAttribute('data-cred'));
       if(db2)deleteUserConfirm(db2.getAttribute('data-uid'),db2.getAttribute('data-uname'));
       if(sb)togglePw(sb.getAttribute('data-show'),sb.getAttribute('data-showa'),sb);
+      var sp=e.target.closest('[data-suspend]');if(sp)toggleSuspend(sp.getAttribute('data-suspend'),sp.getAttribute('data-sname'),sp.getAttribute('data-susp')==='1');
       var rp=e.target.closest('[data-resetpw]');if(rp)resetPasswordModal(rp.getAttribute('data-resetpw'),rp.getAttribute('data-rpname'));
     });}
   }).catch(function(e){cont.innerHTML='<div class="empty-state"><div class="empty-title">Error: '+esc(e.message)+'</div></div>';});
@@ -356,7 +360,7 @@ function doSaveExam(publish){
   loadExams().then(function(){
     var oldProg={};if(editingExamId){var old=_exams.find(function(e){return e.id===editingExamId;});if(old)oldProg=old.studentProgress||{};}
     var id=editingExamId||Date.now().toString();
-    var status=publish?'published':'draft';if(editingExamId&&publish===undefined){var oldEx=_exams.find(function(e){return e.id===editingExamId;});if(oldEx)status=oldEx.status||'draft';}return saveExamDoc({id:id,name:name,timer:parseInt(Q('ex-timer').value)||0,maxScore:parseInt(Q('ex-max').value)||100,passScore:parseInt(Q('ex-pass').value)||50,editCode:Q('ex-editcode').value.trim(),createdBy:currentUser.name,createdById:currentUser.id,questions:questions,studentProgress:oldProg,status:status,startCode:(Q('ex-startcode')?Q('ex-startcode').value.trim():''),opensAt:readDT('ex-opens'),closesAt:readDT('ex-closes'),shuffle:!!(Q('ex-shuffle')&&Q('ex-shuffle').checked),requireFullscreen:!!(Q('ex-fullscreen')&&Q('ex-fullscreen').checked),allowedStudents:collectAllowed()});
+    var status=publish?'published':'draft';if(editingExamId&&publish===undefined){var oldEx=_exams.find(function(e){return e.id===editingExamId;});if(oldEx)status=oldEx.status||'draft';}return saveExamDoc({id:id,name:name,timer:parseInt(Q('ex-timer').value)||0,maxScore:parseInt(Q('ex-max').value)||100,passScore:parseInt(Q('ex-pass').value)||50,editCode:Q('ex-editcode').value.trim(),createdBy:currentUser.name,createdById:currentUser.id,questions:questions,studentProgress:oldProg,status:status,startCode:(Q('ex-startcode')?Q('ex-startcode').value.trim():''),opensAt:readDT('ex-opens'),closesAt:readDT('ex-closes'),shuffle:!!(Q('ex-shuffle')&&Q('ex-shuffle').checked),requireFullscreen:!!(Q('ex-fullscreen')&&Q('ex-fullscreen').checked),allowedStudents:collectAllowed(),extraTime:collectExtraTime()});
   }).then(function(){editingExamId=null;toast(publish?'Exam published! Students can now see it.':'Draft saved! Publish when ready.');loading(false);showScreen('teacher-dash');teacherTab('exams');}).catch(function(e){toast('Error: '+e.message,'error');loading(false);});
 }
 function importExamJSON(event){
@@ -491,7 +495,7 @@ function renderStuExams(){
       }
       var win=examWindowState(ex);
       if(!done&&win.state!=='open'){return '<div class="exam-card-stu draft" style="cursor:not-allowed;"><div><div class="ecs-name">'+esc(ex.name)+'</div><div class="ecs-chips"><span class="chip navy">'+ex.questions.length+' Q</span><span class="draft-badge">'+(win.state==='upcoming'?'&#128339; ':'&#128274; ')+esc(win.label)+'</span></div></div></div>';}
-      var timerChip=ex.timer?'<span class="chip gold">&#9201; '+ex.timer+'m</span>':'';
+      var _xt=(ex.extraTime&&ex.extraTime[currentUser.id])||0;var timerChip=ex.timer?'<span class="chip gold">&#9201; '+(ex.timer+_xt)+'m'+(_xt?' (+'+_xt+' extra)':'')+'</span>':'';
       var doneChip=done?'<span class="chip done">&#10003; Completed</span>':'';
       var passSpan=done?'<span style="font-size:11px;font-weight:700;color:'+(prog.passed?'var(--success)':'var(--danger)')+';">'+(prog.passed?'&#10003; Passed':'&#10005; Failed')+'</span>':'';
       var startBtn=done?'':'<button class="btn-gold" data-startexam="'+ex.id+'" style="flex-shrink:0;padding:9px 18px;font-size:12px;">Start &#8594;</button>';
