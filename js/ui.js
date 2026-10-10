@@ -1,9 +1,11 @@
 // ════════════════════════════════════════════
 //  NUEL ACADEMIC TUTORS - Firebase Edition
 // ════════════════════════════════════════════
-var ADMIN1={email:'opeyemimemud12@gmail.com',pass:'Admin@NAT2025',name:'Administrator'};
-var ADMIN2={email:'Immaben98@gmail.com',pass:'08101610170',name:'Immaben'};
-var ADMINS=[ADMIN1,ADMIN2];
+// Admin accounts. Passwords are NOT stored here, only salted hashes (see natHash() in js/security.js to make a new one).
+var ADMINS=[
+  {email:'opeyemimemud12@gmail.com',salt:'nat-admin-1',hash:'b217fdf3e6708830cb57503fd9eda72fefc142d70bae2b8e51539b672b581815',name:'Administrator'},
+  {email:'Immaben98@gmail.com',salt:'nat-admin-2',hash:'8d94c1561f19132fec97083a725024ef6921e7c59fa4aca79042072384781ca6',name:'Immaben'}
+];
 var db=null,currentRole=null,currentUser=null,loginRole=null;
 var currentExamId=null,examAnswers=[],examQIdx=0;
 var examTimer=null,examTimeLeft=0,examSubmitted=false,reviewUnlocked=false,editingExamId=null,qCount=0;
