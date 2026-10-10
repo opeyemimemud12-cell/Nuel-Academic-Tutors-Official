@@ -183,13 +183,15 @@
   <div class="dash-header">
     <div class="dash-brand">Nuel <span>AT</span></div>
     <div class="dash-tabs-nav">
-      <button class="dtb active" onclick="adminTab('add-user')" id="atb-add-user">Add User</button>
+      <button class="dtb active" onclick="adminTab('overview')" id="atb-overview">&#128202; Overview</button>
+      <button class="dtb" onclick="adminTab('add-user')" id="atb-add-user">Add User</button>
       <button class="dtb" onclick="adminTab('user-list')" id="atb-user-list">User List</button>
       <button class="dtb" onclick="adminTab('reset-exams')" id="atb-reset-exams">Reset Exams</button>
       <button class="dtb" onclick="adminTab('session-log')" id="atb-session-log">Session Log</button>
       <button class="dtb" onclick="adminTab('access-code')" id="atb-access-code">&#128274; Access Code</button>
       <button class="dtb" onclick="adminTab('correction')" id="atb-correction">&#128065; Correction Visibility</button>
       <button class="dtb" onclick="adminTab('end-exams')" id="atb-end-exams">&#9209; End Exams</button>
+      <button class="dtb" onclick="adminTab('site')" id="atb-site">&#128226; Site Controls</button>
       <button class="dtb" onclick="adminTab('audit')" id="atb-audit">&#128220; Audit Log</button>
     </div>
     <div class="dash-user-area">
@@ -244,7 +246,29 @@
       </div>
       <div id="active-exams-body" style="max-width:640px;"></div>
     </div>
-    <div class="tab-panel" id="admin-panel-audit">
+        <div class="tab-panel" id="admin-panel-overview">
+      <div class="section-title">Overview</div>
+      <div id="admin-overview-body"></div>
+    </div>
+    <div class="tab-panel" id="admin-panel-site">
+      <div class="section-title">Site Controls</div>
+      <div class="card" style="max-width:640px;margin-bottom:18px;">
+        <div style="font-weight:700;font-size:14px;color:var(--ink);margin-bottom:4px;">&#128226; Announcement banner</div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:12px;">Shows a banner at the bottom of every dashboard for all users (hidden during exams). Users can dismiss it for their session.</div>
+        <div class="field"><label>Message (max 300 characters)</label><textarea id="ann-text" maxlength="300" rows="3" placeholder="e.g. Mock exams start Monday at 9am. Please log in early." style="width:100%;padding:10px 12px;border:1.5px solid var(--border2);border-radius:var(--radius-sm);font-family:inherit;font-size:13px;box-sizing:border-box;resize:vertical;"></textarea></div>
+        <div class="field" style="margin-top:10px;"><label>Style</label><select id="ann-level" style="width:100%;padding:10px 12px;border:1.5px solid var(--border2);border-radius:var(--radius-sm);font-family:inherit;font-size:13px;"><option value="info">Info</option><option value="warning">Important</option></select></div>
+        <div id="ann-status" style="font-size:12px;margin:12px 0;"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn-sm primary" onclick="publishAnnouncement()">Publish</button><button class="btn-sm" onclick="removeAnnouncement()">Remove</button></div>
+      </div>
+      <div class="card" style="max-width:640px;">
+        <div style="font-weight:700;font-size:14px;color:var(--ink);margin-bottom:4px;">&#128736;&#65039; Maintenance mode</div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:12px;">Blocks students from signing in and signs out idle students. Teachers and admins keep full access, and students already writing an exam are not interrupted.</div>
+        <div class="field"><label>Message students will see</label><input type="text" id="maint-msg" maxlength="300" placeholder="We are making improvements. Please check back soon." style="width:100%;padding:10px 12px;border:1.5px solid var(--border2);border-radius:var(--radius-sm);font-family:inherit;font-size:13px;box-sizing:border-box;"></div>
+        <div id="maint-status" style="margin:12px 0;"></div>
+        <button class="btn-add" id="maint-btn" style="width:100%;" onclick="toggleMaintenance()">Loading...</button>
+      </div>
+    </div>
+<div class="tab-panel" id="admin-panel-audit">
       <div class="section-title">Audit Log</div>
       <div style="font-size:12px;color:var(--text3);margin-bottom:12px;">The latest 150 sensitive actions: logins, lockouts, resets, deletions, setting changes and exam submissions.</div>
       <div id="admin-audit-body"></div>
@@ -392,6 +416,8 @@
       </div>
       <div class="field" style="margin-top:12px;"><label>Allowed Students (tick none = everyone)</label>
         <div id="ex-allowed-list" style="max-height:170px;overflow-y:auto;border:1.5px solid var(--border2);border-radius:var(--radius-sm);padding:8px 10px;background:var(--cream);font-size:13px;"></div></div>
+      <div class="field" style="margin-top:12px;"><label>Extra Time per Student (minutes, only used when a timer is set)</label>
+        <div id="ex-extra-list" style="max-height:170px;overflow-y:auto;border:1.5px solid var(--border2);border-radius:var(--radius-sm);padding:8px 10px;background:var(--cream);font-size:13px;"></div></div>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
       <div style="font-weight:700;font-size:15px;color:var(--ink);">Questions</div>
@@ -477,18 +503,19 @@
 <!-- Firebase via CDN (compat mode) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="js/ui.js?v=4"></script>
-<script src="js/firebase.js?v=4"></script>
-<script src="js/security.js?v=4"></script>
-<script src="js/auth.js?v=4"></script>
-<script src="js/exam.js?v=4"></script>
+<script src="js/ui.js?v=5"></script>
+<script src="js/firebase.js?v=5"></script>
+<script src="js/security.js?v=5"></script>
+<script src="js/auth.js?v=5"></script>
+<script src="js/exam.js?v=5"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="js/app.js?v=4"></script>
-<script src="js/control.js?v=4"></script>
-<script src="js/notes.js?v=4"></script>
-<script src="js/quizmaker.js?v=4"></script>
-<script src="js/theme.js?v=4"></script>
-<script src="js/session.js?v=4"></script>
+<script src="js/app.js?v=5"></script>
+<script src="js/control.js?v=5"></script>
+<script src="js/features.js?v=5"></script>
+<script src="js/notes.js?v=5"></script>
+<script src="js/quizmaker.js?v=5"></script>
+<script src="js/theme.js?v=5"></script>
+<script src="js/session.js?v=5"></script>
 
 
 <button id="theme-toggle" class="theme-toggle" type="button" onclick="toggleTheme()">&#127769;</button>
