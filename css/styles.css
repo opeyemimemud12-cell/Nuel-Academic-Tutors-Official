@@ -449,3 +449,6 @@ mark{background:rgba(201,168,76,0.4);color:inherit;border-radius:3px;padding:0 1
 /* ===== Restoring saved login (no flash of the landing page) ===== */
 html.restoring .screen{display:none!important;}
 html.restoring body{background:#0a1628;}
+
+/* exam lock-down: no text selection while an exam is running */
+body.exam-locked,body.exam-locked *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
