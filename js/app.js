@@ -10,6 +10,7 @@ function adminTab(tab){
   if(tab==='session-log')renderAdminSessionLog();
   if(tab==='access-code')renderAccessCodeTab();
   if(tab==='correction')renderCorrectionTab();
+  if(tab==='audit')renderAuditTab();
   if(tab==='end-exams')renderEndExamsTab();else stopEndExamsListener();
 }
 function addUser(role){
@@ -19,9 +20,9 @@ function addUser(role){
   loading(true,'Adding user...');
   loadUsers().then(function(){
     if(_users.find(function(u){return u.email===email||u.username===email;})){toast('Email already exists.','error');loading(false);return;}
-    var id=Date.now().toString();
-    return saveUser({id:id,role:role,name:name,email:email,username:email,password:pass,sessions:[],createdAt:new Date().toISOString()});
-  }).then(function(){Q(p+'-name').value='';Q(p+'-email').value='';Q(p+'-pass').value='';toast((role==='teacher'?'Teacher':'Student')+' added!');loading(false);})
+    var id=Date.now().toString();var _s=newSalt();
+    return saveUser({id:id,role:role,name:name,email:email,username:email,salt:_s,passHash:hashPassword(pass,_s),sessions:[],createdAt:new Date().toISOString()});
+  }).then(function(){Q(p+'-name').value='';Q(p+'-email').value='';Q(p+'-pass').value='';logAudit('add_user','Added '+role+' '+name+' ('+email+')');toast((role==='teacher'?'Teacher':'Student')+' added!');loading(false);})
   .catch(function(e){toast('Error: '+e.message,'error');loading(false);});
 }
 
@@ -43,21 +44,20 @@ function renderAdminUserList(){
         +'</div>'
         +'<div class="cred-panel" id="cred'+i+'">'
         +'<div class="cred-row"><span class="cred-key">Email</span><span class="cred-val">'+esc(u.email)+'</span></div>'
-        +'<div class="cred-row"><span class="cred-key">Password</span>'
-        +'<span class="cred-val" id="cpw'+i+'">&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;</span>'
-        +'<span style="display:none" id="cpwa'+i+'">'+esc(u.password)+'</span>'
-        +'<button data-show="cpw'+i+'" data-showa="cpwa'+i+'" style="background:none;border:1px solid var(--border2);border-radius:4px;padding:2px 7px;font-size:10px;cursor:pointer;color:var(--text2);margin-left:8px;">Show</button>'
+        +'<div class="cred-row"><span class="cred-key">Password</span><span class="cred-val">Stored securely (cannot be viewed)</span>'
+        +'<button data-resetpw="'+u.id+'" data-rpname="'+esc(u.name)+'" style="background:none;border:1px solid var(--border2);border-radius:4px;padding:2px 7px;font-size:10px;cursor:pointer;color:var(--text2);margin-left:8px;">Reset</button>'
         +'</div></div>';
     }).join('');
     cont.innerHTML=html;
-    cont.addEventListener('click',function(e){
+    if(!cont._ulBound){cont._ulBound=true;cont.addEventListener('click',function(e){
       var cb=e.target.closest('[data-cred]');
       var db2=e.target.closest('[data-uid]');
       var sb=e.target.closest('[data-show]');
       if(cb)toggleEl(cb.getAttribute('data-cred'));
       if(db2)deleteUserConfirm(db2.getAttribute('data-uid'),db2.getAttribute('data-uname'));
       if(sb)togglePw(sb.getAttribute('data-show'),sb.getAttribute('data-showa'),sb);
-    });
+      var rp=e.target.closest('[data-resetpw]');if(rp)resetPasswordModal(rp.getAttribute('data-resetpw'),rp.getAttribute('data-rpname'));
+    });}
   }).catch(function(e){cont.innerHTML='<div class="empty-state"><div class="empty-title">Error: '+esc(e.message)+'</div></div>';});
 }
 function toggleEl(id){var el=Q(id);if(el)el.classList.toggle('open');}
@@ -74,7 +74,7 @@ function deleteUserConfirm(id,name){
 }
 function doDeleteUser(id){
   closeModal();loading(true,'Deleting...');
-  deleteUserById(id).then(function(){toast('User deleted.');loading(false);renderAdminUserList();}).catch(function(e){toast('Error: '+e.message,'error');loading(false);});
+  var du=_users.find(function(u){return u.id===id;});deleteUserById(id).then(function(){logAudit('delete_user','Deleted '+(du?du.role+' '+du.name+' ('+du.email+')':id));toast('User deleted.');loading(false);renderAdminUserList();}).catch(function(e){toast('Error: '+e.message,'error');loading(false);});
 }
 
 // Reset exams — use data attributes
@@ -117,11 +117,24 @@ function adminResetExam(examId,stuId){
   }).then(function(d){
     var still=((d.data()||{}).studentProgress||{})[stuId];
     if(still){throw new Error('Reset did not save. Check your Firestore rules allow updating the exams collection.');}
+    var _st=_users.find(function(u){return u.id===stuId;}),_ex=_exams.find(function(e){return e.id===examId;});
+    logAudit('reset_exam',(_ex?_ex.name:examId)+' reset for '+(_st?_st.name:stuId));
     toast('Exam reset. The student can retake it now.');loading(false);renderAdminResetExams();
   }).catch(function(e){toast('Reset error: '+e.message,'error');loading(false);});
 }
 
 // Session log — use data attributes
+function sessionFlags(s){
+  var f=[];
+  if((s.tabSwitches||0)>0)f.push('Tab switches: '+s.tabSwitches);
+  if(s.startTime&&s.submittedAt&&s.questionCount){var secs=(new Date(s.submittedAt)-new Date(s.startTime))/1000;if(secs/s.questionCount<5)f.push('Very fast finish ('+Math.round(secs)+'s for '+s.questionCount+' Q)');}
+  if((s.maxIdleMs||0)>=120000)f.push('Idle for '+Math.round(s.maxIdleMs/60000)+' min');
+  if((s.blockedActions||0)>=3)f.push('Blocked copy/paste/shortcuts x'+s.blockedActions);
+  if((s.fsExits||0)>0)f.push('Left fullscreen x'+s.fsExits);
+  if(s.endReason==='auto-submit')f.push('Auto-submitted');
+  if(s.endReason==='ended-by-admin')f.push('Ended by admin');
+  return f;
+}
 function renderAdminSessionLog(){
   var cont=Q('admin-session-body');
   cont.innerHTML='<div style="padding:20px;text-align:center;color:var(--text3)">Loading...</div>';
@@ -129,16 +142,21 @@ function renderAdminSessionLog(){
     var students=_users.filter(function(u){return u.role==='student';});
     if(!students.length){cont.innerHTML='<div class="empty-state"><div class="empty-icon">&#128203;</div><div class="empty-title">No Students Yet</div></div>';return;}
     cont.innerHTML=students.map(function(stu,si){
-      var sessions=stu.sessions||[];
+      var sessions=stu.sessions||[],flagged=0;
       var sessHtml=sessions.length===0?'<div style="padding:10px;font-size:12px;color:var(--text3)">No sessions yet.</div>'
-        :sessions.map(function(s,idx){return '<div class="slog-entry"><span style="color:var(--gold);font-weight:700">Session '+(idx+1)+' &#8212; '+(s.examName||'Unknown')+'</span>\nDate      : '+(s.submittedAt?new Date(s.submittedAt).toLocaleString():'N/A')+'\nCandidate : '+(s.candidate||stu.name)+'\nScore     : '+(s.score!==undefined?s.score+'/'+s.maxScore:'N/A')+'\nPassed    : '+(s.passed===true?'Yes &#10003;':s.passed===false?'No &#10005;':'N/A')+'\n&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;\nTab Switches: '+(s.tabSwitches||0)+'\nKeystrokes  : '+(s.keystrokes||0)+'</div>';}).join('');
-      return '<div class="sc"><div class="sc-header" data-toggle="slog'+si+'"><div class="uli-av student">'+stu.name.charAt(0)+'</div>'
+        :sessions.map(function(s,idx){
+          var fl=sessionFlags(s);if(fl.length)flagged++;
+          return '<div class="slog-entry"><span style="color:var(--gold);font-weight:700">Session '+(idx+1)+' &#8212; '+esc(s.examName||'Unknown')+'</span>'+(fl.length?' <span style="color:var(--danger);font-weight:700">&#9888; FLAGGED</span>':'')
+            +'\nDate      : '+(s.submittedAt?new Date(s.submittedAt).toLocaleString():'N/A')+'\nCandidate : '+esc(s.candidate||stu.name)+'\nScore     : '+(s.score!==undefined?s.score+'/'+s.maxScore:'N/A')+'\nPassed    : '+(s.passed===true?'Yes &#10003;':s.passed===false?'No &#10005;':'N/A')
+            +'\n&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;\nTab Switches: '+(s.tabSwitches||0)+'\nKeystrokes  : '+(s.keystrokes||0)+'\nBlocked acts: '+(s.blockedActions||0)
+            +(fl.length?'\n&#9888; Flags     : '+esc(fl.join('  |  ')):'')+'</div>';}).join('');
+      return '<div class="sc"><div class="sc-header" data-toggle="slog'+si+'"><div class="uli-av student">'+esc(stu.name).charAt(0)+'</div>'
         +'<div style="flex:1"><div style="font-weight:700;font-size:13px;color:var(--ink)">'+esc(stu.name)+'</div>'
-        +'<div style="font-size:10px;color:var(--text3)">'+sessions.length+' session'+(sessions.length!==1?'s':'')+'</div></div>'
+        +'<div style="font-size:10px;color:var(--text3)">'+sessions.length+' session'+(sessions.length!==1?'s':'')+(flagged?' &middot; <span style="color:var(--danger);font-weight:700">&#9888; '+flagged+' flagged</span>':'')+'</div></div>'
         +'<span style="color:var(--text3)">&#9660;</span></div>'
         +'<div class="sc-body" id="slog'+si+'" style="padding-top:4px">'+sessHtml+'</div></div>';
     }).join('');
-    cont.addEventListener('click',function(e){var tog=e.target.closest('[data-toggle]');if(tog)toggleEl(tog.getAttribute('data-toggle'));});
+    if(!cont._slBound){cont._slBound=true;cont.addEventListener('click',function(e){var tog=e.target.closest('[data-toggle]');if(tog)toggleEl(tog.getAttribute('data-toggle'));});}
   }).catch(function(){cont.innerHTML='<div class="empty-state"><div class="empty-title">Error</div></div>';});
 }
 function renderAccessCodeTab(){
@@ -148,8 +166,8 @@ function renderAccessCodeTab(){
     else{statusEl.innerHTML='<div style="display:flex;align-items:center;gap:10px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);padding:12px 16px;"><span style="font-size:20px;">&#128275;</span><div><div style="font-weight:700;font-size:13px;color:var(--ink);">No Code Set</div><div style="font-size:12px;color:var(--text3);">Students log in freely.</div></div></div>';}
   });
 }
-function setAccessCode(){var inp=Q('new-access-code');var code=(inp?inp.value:'').trim();if(!code){toast('Enter a code first.','error');return;}loading(true,'Saving...');setConfig('access_code',code).then(function(){if(inp)inp.value='';toast('Access code set!');loading(false);renderAccessCodeTab();}).catch(function(e){toast('Error: '+e.message,'error');loading(false);});}
-function clearAccessCode(){if(!confirm('Remove access code?'))return;loading(true,'Removing...');setConfig('access_code',null).then(function(){toast('Code removed.');loading(false);renderAccessCodeTab();}).catch(function(e){toast('Error: '+e.message,'error');loading(false);});}
+function setAccessCode(){var inp=Q('new-access-code');var code=(inp?inp.value:'').trim();if(!code){toast('Enter a code first.','error');return;}loading(true,'Saving...');setConfig('access_code',code).then(function(){if(inp)inp.value='';logAudit('access_code_set','Student access code changed');toast('Access code set!');loading(false);renderAccessCodeTab();}).catch(function(e){toast('Error: '+e.message,'error');loading(false);});}
+function clearAccessCode(){if(!confirm('Remove access code?'))return;loading(true,'Removing...');setConfig('access_code',null).then(function(){logAudit('access_code_removed','Student access code removed');toast('Code removed.');loading(false);renderAccessCodeTab();}).catch(function(e){toast('Error: '+e.message,'error');loading(false);});}
 
 // TEACHER
 function enterTeacherDash(){Q('teacher-uname').textContent=currentUser.name;Q('teacher-greeting').textContent=currentUser.name;teacherTab('home');showScreen('teacher-dash');}
@@ -236,7 +254,7 @@ function renderTeacherExams(){
     });
   }).catch(function(){cont.innerHTML='<div class="empty-state"><div class="empty-title">Error</div></div>';});
 }
-function showCreateExam(){editingExamId=null;qCount=0;['ex-name','ex-editcode'].forEach(function(id){if(Q(id))Q(id).value='';});if(Q('ex-timer'))Q('ex-timer').value='0';if(Q('ex-max'))Q('ex-max').value='100';if(Q('ex-pass'))Q('ex-pass').value='50';if(Q('questions-container'))Q('questions-container').innerHTML='';if(Q('ces-title'))Q('ces-title').textContent='Create Exam';addQuestion();showScreen('create-exam-screen');}
+function showCreateExam(){resetExamExtras();editingExamId=null;qCount=0;['ex-name','ex-editcode'].forEach(function(id){if(Q(id))Q(id).value='';});if(Q('ex-timer'))Q('ex-timer').value='0';if(Q('ex-max'))Q('ex-max').value='100';if(Q('ex-pass'))Q('ex-pass').value='50';if(Q('questions-container'))Q('questions-container').innerHTML='';if(Q('ces-title'))Q('ces-title').textContent='Create Exam';addQuestion();showScreen('create-exam-screen');}
 function editExam(id){
   loadExams().then(function(){
     var ex=_exams.find(function(e){return e.id===id;});if(!ex)return;
@@ -256,7 +274,7 @@ function editExam(id){
   });
 }
 function confirmEditExam(id){var inp=Q('ecodeinp');loadExams().then(function(){var ex=_exams.find(function(e){return e.id===id;});if(!ex)return;if(!inp||inp.value!==ex.editCode){if(inp){inp.classList.remove('shake');void inp.offsetWidth;inp.classList.add('shake');}if(Q('ecodeerr'))Q('ecodeerr').textContent='Incorrect code.';return;}closeModal();loadExamForEdit(ex);});}
-function loadExamForEdit(ex){editingExamId=ex.id;if(Q('ex-name'))Q('ex-name').value=ex.name;if(Q('ex-timer'))Q('ex-timer').value=ex.timer||0;if(Q('ex-max'))Q('ex-max').value=ex.maxScore||100;if(Q('ex-pass'))Q('ex-pass').value=ex.passScore||50;if(Q('ex-editcode'))Q('ex-editcode').value=ex.editCode||'';qCount=0;if(Q('questions-container'))Q('questions-container').innerHTML='';if(Q('ces-title'))Q('ces-title').textContent='Edit Exam';ex.questions.forEach(function(q){addQuestion(q);});showScreen('create-exam-screen');}
+function loadExamForEdit(ex){fillExamExtras(ex);editingExamId=ex.id;if(Q('ex-name'))Q('ex-name').value=ex.name;if(Q('ex-timer'))Q('ex-timer').value=ex.timer||0;if(Q('ex-max'))Q('ex-max').value=ex.maxScore||100;if(Q('ex-pass'))Q('ex-pass').value=ex.passScore||50;if(Q('ex-editcode'))Q('ex-editcode').value=ex.editCode||'';qCount=0;if(Q('questions-container'))Q('questions-container').innerHTML='';if(Q('ces-title'))Q('ces-title').textContent='Edit Exam';ex.questions.forEach(function(q){addQuestion(q);});showScreen('create-exam-screen');}
 function backFromCreateExam(){editingExamId=null;showScreen('teacher-dash');teacherTab('exams');}
 function compressImage(file,cb){
   var reader=new FileReader();
@@ -333,11 +351,12 @@ function doSaveExam(publish){
     questions.push({text:text,opts:opts,correct:correct,image:imgData||null});
   });
   if(!valid)return;
+  var _op=readDT('ex-opens'),_cl=readDT('ex-closes');if(_op&&_cl&&new Date(_cl)<=new Date(_op)){toast('Closing time must be after the opening time.','error');return;}
   loading(true,'Saving exam...');
   loadExams().then(function(){
     var oldProg={};if(editingExamId){var old=_exams.find(function(e){return e.id===editingExamId;});if(old)oldProg=old.studentProgress||{};}
     var id=editingExamId||Date.now().toString();
-    var status=publish?'published':'draft';if(editingExamId&&publish===undefined){var oldEx=_exams.find(function(e){return e.id===editingExamId;});if(oldEx)status=oldEx.status||'draft';}return saveExamDoc({id:id,name:name,timer:parseInt(Q('ex-timer').value)||0,maxScore:parseInt(Q('ex-max').value)||100,passScore:parseInt(Q('ex-pass').value)||50,editCode:Q('ex-editcode').value.trim(),createdBy:currentUser.name,createdById:currentUser.id,questions:questions,studentProgress:oldProg,status:status});
+    var status=publish?'published':'draft';if(editingExamId&&publish===undefined){var oldEx=_exams.find(function(e){return e.id===editingExamId;});if(oldEx)status=oldEx.status||'draft';}return saveExamDoc({id:id,name:name,timer:parseInt(Q('ex-timer').value)||0,maxScore:parseInt(Q('ex-max').value)||100,passScore:parseInt(Q('ex-pass').value)||50,editCode:Q('ex-editcode').value.trim(),createdBy:currentUser.name,createdById:currentUser.id,questions:questions,studentProgress:oldProg,status:status,startCode:(Q('ex-startcode')?Q('ex-startcode').value.trim():''),opensAt:readDT('ex-opens'),closesAt:readDT('ex-closes'),shuffle:!!(Q('ex-shuffle')&&Q('ex-shuffle').checked),requireFullscreen:!!(Q('ex-fullscreen')&&Q('ex-fullscreen').checked),allowedStudents:collectAllowed()});
   }).then(function(){editingExamId=null;toast(publish?'Exam published! Students can now see it.':'Draft saved! Publish when ready.');loading(false);showScreen('teacher-dash');teacherTab('exams');}).catch(function(e){toast('Error: '+e.message,'error');loading(false);});
 }
 function importExamJSON(event){
@@ -425,7 +444,7 @@ function deleteExamConfirm(id,name){
     +'<button class="modal-btn" style="background:var(--danger);color:#fff;border-color:var(--danger);" data-delexam2="'+id+'">Delete</button></div>');
   setTimeout(function(){var btn=document.querySelector('[data-delexam2]');if(btn)btn.addEventListener('click',function(){doDeleteExam(id);});},30);
 }
-function doDeleteExam(id){closeModal();loading(true,'Deleting...');deleteExamById(id).then(function(){toast('Exam deleted.');loading(false);renderTeacherExams();}).catch(function(e){toast('Error: '+e.message,'error');loading(false);});}
+function doDeleteExam(id){closeModal();loading(true,'Deleting...');var dex=_exams.find(function(e){return e.id===id;});deleteExamById(id).then(function(){logAudit('delete_exam','Deleted exam '+(dex?dex.name:id));toast('Exam deleted.');loading(false);renderTeacherExams();}).catch(function(e){toast('Error: '+e.message,'error');loading(false);});}
 function exportExam(id){loadExams().then(function(){var ex=_exams.find(function(e){return e.id===id;});if(!ex)return;var blob=new Blob([JSON.stringify(ex,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=ex.name.replace(/[^a-z0-9]/gi,'_')+'.json';a.click();toast('Exported!');});}
 function renderTeacherScores(){
   var cont=Q('teacher-scores-body');
@@ -457,7 +476,8 @@ function renderStuExams(){
   loadExams().then(function(){
     if(!_exams.length){cont.innerHTML='<div class="empty-state"><div class="empty-icon">&#9997;</div><div class="empty-title">No Exams Available</div></div>';return;}
     // Show ALL exams (published + draft), but drafts are locked
-    var html=_exams.map(function(ex){
+    var visibleExams=_exams.filter(function(ex){var al=ex.allowedStudents;return !(al&&al.length)||al.indexOf(currentUser.id)>-1;});
+    var html=visibleExams.map(function(ex){
       var isDraft=!ex.status||ex.status==='draft';
       var prog=(ex.studentProgress||{})[currentUser.id];var done=!!(prog&&prog.completed);
       if(isDraft){
@@ -469,6 +489,8 @@ function renderStuExams(){
           +'<span style="font-size:11px;color:var(--text3);">Coming soon</span>'
           +'</div>';
       }
+      var win=examWindowState(ex);
+      if(!done&&win.state!=='open'){return '<div class="exam-card-stu draft" style="cursor:not-allowed;"><div><div class="ecs-name">'+esc(ex.name)+'</div><div class="ecs-chips"><span class="chip navy">'+ex.questions.length+' Q</span><span class="draft-badge">'+(win.state==='upcoming'?'&#128339; ':'&#128274; ')+esc(win.label)+'</span></div></div></div>';}
       var timerChip=ex.timer?'<span class="chip gold">&#9201; '+ex.timer+'m</span>':'';
       var doneChip=done?'<span class="chip done">&#10003; Completed</span>':'';
       var passSpan=done?'<span style="font-size:11px;font-weight:700;color:'+(prog.passed?'var(--success)':'var(--danger)')+';">'+(prog.passed?'&#10003; Passed':'&#10005; Failed')+'</span>':'';
